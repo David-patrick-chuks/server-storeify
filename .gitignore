@@ -6,6 +6,9 @@ yarn-debug.log
 yarn-error.log
 package-lock.json
 
+# Build output (do not track these in Git)
+dist/
+
 # Environment variables
 .env
 .env.local
