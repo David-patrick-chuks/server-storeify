@@ -58,11 +58,11 @@ const limiter = rateLimit({
   max: 100,
   message: "Too many requests from this IP, please try again later.",
 });
-app.use("/api/", limiter);
+app.use("/api/v1/", limiter);
 
 // Route definitions
-app.use('/api/auth', authRoutes);
-app.use('/api/email', emailRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/email', emailRoutes);
 
 // Health check route
 app.get("/health", async (req: Request, res: Response) => {

@@ -34,10 +34,6 @@ const server = app.listen(process.env.PORT || 3000, () => {
   logger.info(`Server is running on port ${process.env.PORT || 3000}`);
 });
 
-// Handle SIGTERM and SIGINT signals (graceful shutdown)
-// process.on("SIGTERM", () => shutdown(server));  // SIGTERM for production environments
-// process.on("SIGINT", () => shutdown(server));   // SIGINT for manual termination (Ctrl+C)
-
 
 process.on("SIGTERM", () => {
   logger.info("Received SIGTERM signal.");
