@@ -80,6 +80,14 @@ app.get("/health", async (req: Request, res: Response) => {
   }
 });
 
+// Catch-all 404 handler for undefined routes
+app.use((req: Request, res: Response) => {
+  logger.warn(`404 error: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    message: "Not Found",
+    error: `Cannot ${req.method} ${req.originalUrl}`,
+  });
+});
 
 // Error handling middleware
 app.use(errorMiddleware);

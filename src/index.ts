@@ -8,14 +8,12 @@ dotenv.config();
 const shutdown = (server: any) => {
   try {
     logger.info("Shutting down gracefully...");
-
     // Attempt to close the server
     server.close(() => {
       logger.info("Closed all connections gracefully.");
       // Optional: clean up other resources (like DB connections)
       process.exit(0); // Exit the process after everything is closed
     });
-
     // If server hasn't closed after 10 seconds, force shutdown
     setTimeout(() => {
       logger.error("Forcing shutdown after timeout.");
@@ -33,13 +31,10 @@ const shutdown = (server: any) => {
 const server = app.listen(process.env.PORT || 3000, () => {
   logger.info(`Server is running on port ${process.env.PORT || 3000}`);
 });
-
-
 process.on("SIGTERM", () => {
   logger.info("Received SIGTERM signal.");
   shutdown(server);
 });
-
 process.on("SIGINT", () => {
   logger.info("Received SIGINT signal.");
   shutdown(server);
