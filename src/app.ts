@@ -14,6 +14,7 @@ dotenv.config();
 
 import authRoutes from './routes/auth';
 import emailRoutes from './routes/emails';
+import userRoutes from './routes/userRoutes';
 import { checkDatabaseConnection } from "./utils/checkDatabaseConnection";
 const app: Application = express();
 
@@ -23,17 +24,27 @@ const app: Application = express();
 connectDB();
 
 app.use(cookieParser());
-const csrfProtection = csrf({ cookie: true });
+// const csrfProtection = csrf({ cookie: true });
+const csrfProtection = csrf({
+  cookie: {
+    httpOnly: true, // Ensures the cookie is not accessible via JavaScript
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
+    sameSite: 'strict', // Helps prevent CSRF attacks by allowing cookies only from the same site
+    maxAge: 60 * 60 * 24 * 7 // Cookie expiry in seconds (e.g., 7 days)
+  },
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'], // Methods to ignore CSRF check
+});
 app.use(csrfProtection);
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "*",
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173", 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "CSRF-Token", "Authorization"],
+  // exposedHeaders: ["CSRF-Token"], // Expose CSRF-Token header to the client
   credentials: true,
   preflightContinue: false,
+  optionsSuccessStatus: 204, // For legacy browser support
 };
-
 // Middleware setup
 app.use(helmet()); // Security headers
 app.use(cors(corsOptions));
@@ -58,11 +69,22 @@ const limiter = rateLimit({
   max: 100,
   message: "Too many requests from this IP, please try again later.",
 });
+
+
 app.use("/api/v1/", limiter);
 
 // Route definitions
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/email', emailRoutes);
+app.use('/api/v1/user', userRoutes);
+
+
+app.get('/api/v1/csrf-token', (req, res) => {
+  // Send CSRF token to the client
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+
 
 // Health check route
 app.get("/health", async (req: Request, res: Response) => {
@@ -79,6 +101,7 @@ app.get("/health", async (req: Request, res: Response) => {
     }
   }
 });
+
 
 // Catch-all 404 handler for undefined routes
 app.use((req: Request, res: Response) => {

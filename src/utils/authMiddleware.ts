@@ -12,12 +12,13 @@ declare global {
 }
 
 // Middleware to authenticate JWT
+
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.cookies.jwt;
 
   if (!token) {
-    res.status(401).json({ message: 'No token provided. Unauthorized access.' })
-    return;
+     res.status(401).json({ message: 'No token provided. Unauthorized access.' })
+     return;
   }
 
   // Typecast jwt.verify to the correct function signature
@@ -31,13 +32,13 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
       if (err.name === 'TokenExpiredError') {
         return res.status(401).json({ message: 'Token expired' });
       }
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: 'Unauthorized access' });
     }
 
     // Attach the decoded user data to the request object
     if (decoded) {
-      req.userId = decoded.userId; // Attach userId to the request
-      req.user = decoded; // Attach the full decoded user payload
+      req.userId = decoded.googleId; // Attach googleId to the request (matching JWT payload key)
+      req.user = decoded; // Attach the full decoded user payload for further use
     }
 
     // Continue to the next middleware
@@ -50,7 +51,7 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
 export const isAuthorized = (req: Request, res: Response, next: NextFunction): void => {
   const user = req.user; // Now `user` is recognized on the request object
 
-  if (user?.email !== 'Chutek@gmail.com') {
+  if (user?.email !== 'pd3072894@gmail.com') {
     res.status(403).json({ message: 'Access denied. Unauthorized user.' })
     return
   }

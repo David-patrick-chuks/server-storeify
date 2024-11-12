@@ -8,13 +8,15 @@
     "dev": "nodemon src/index.ts",
     "lint": "eslint . --fix",
     "test": "jest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "seed": "npx ts-node src/seed/seedUser.ts"
   },
   "keywords": [],
   "author": "David Patrick",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "connect-timeout": "^1.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/connect-timeout": "^0.0.39",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
