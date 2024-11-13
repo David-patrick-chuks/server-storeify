@@ -17,7 +17,7 @@ import { healthcareService } from "./services/HealthCheckController";
 import { csrfTokenGen } from "./services/csrfTokenGen";
 import { catchAll404Request } from "./utils/catchAll404Request";
 import { globalError } from "./utils/globalErrorHandler";
-import xss from 'express-xss-sanitizer'
+// import xss from 'express-xss-sanitizer'
 
 dotenv.config();
 
@@ -36,7 +36,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit:'1kb' }));
 app.use(cookieParser());
 /// req sanitizer
-app.use(xss());
+// app.use(xss());
 // Request timeout middleware (2-minute timeout)
 app.use(timeout("2m"));
 
