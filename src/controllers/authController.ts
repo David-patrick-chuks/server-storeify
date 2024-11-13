@@ -93,8 +93,8 @@ export const oauth2Callback = async (req: Request, res: Response): Promise<void>
     // Store tokens and user profile info in the database
     await storeTokens(profile, tokens);
 
-    // Generate JWT token
-    const jwtToken = createJWT(profile.id);
+    // Generate JWT token with googleId and accessToken
+    const jwtToken = createJWT(profile.id, tokens.access_token); // Include access_token in the JWT
 
     // Set JWT token in cookies
     res.cookie('jwt', jwtToken, {
@@ -115,7 +115,6 @@ export const oauth2Callback = async (req: Request, res: Response): Promise<void>
     res.status(500).send('Failed to authenticate');
   }
 };
-
 
 
 // Redirect to Google OAuth2 for login

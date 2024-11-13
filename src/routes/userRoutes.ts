@@ -11,7 +11,7 @@ router.get('/profile', authenticateJWT, getUserProfile);
 // router.put('/profile', authenticateJWT, updateUserProfile);
 
 router.get('/check-auth', authenticateJWT, (req, res) => {
-    res.status(200).json({ message: 'User is authenticated' });
+    res.status(200).json({ message: req.user });
   });
 
   

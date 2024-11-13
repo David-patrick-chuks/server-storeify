@@ -9,6 +9,12 @@ const oauth2Client = new google.auth.OAuth2(
   "http://localhost:5555/api/v1/auth/google/oauth2callback"
 );
 
+const refreshAccessToken = async () => {
+  const response = await oauth2Client.refreshAccessToken();
+  const newAccessToken = response.credentials.access_token;
+  return newAccessToken;
+};
+
 // Function to generate authentication URL
 export const getAuthUrl = async () => {
   const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
@@ -144,9 +150,9 @@ export const storeTokens = async (profile: GoogleProfile, tokens: GoogleTokens) 
 
 
 // Function to create JWT token
-
-export const createJWT = (googleId: string) => {
-  return jwt.sign({ googleId }, process.env.JWT_SECRET || '', { expiresIn: '15d' });
+// Create JWT including accessToken
+export const createJWT = (googleId: string, accessToken: string) => {
+  return jwt.sign({ googleId, accessToken }, process.env.JWT_SECRET || '', { expiresIn: '15d' });
 };
 // Function to send email using Google API
 export const sendEmail = async (to: string, subject: string, body: string) => {
