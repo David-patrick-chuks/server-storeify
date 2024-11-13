@@ -1,13 +1,12 @@
-import csrf from 'csurf';
-// const csrfProtection = csrf({ cookie: true });
-export const csrfProtection = csrf({
-  cookie: true,
-    // cookie: {
-    //   httpOnly: true, // Ensures the cookie is not accessible via JavaScript
-    //   secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
-    //   sameSite: 'strict', // Helps prevent CSRF attacks by allowing cookies only from the same site
-    //   maxAge: 60 * 60 * 24 * 7 // Cookie expiry in seconds (e.g., 7 days)
-    // },
-    ignoreMethods: ['GET', 'HEAD', 'OPTIONS'], // Methods to ignore CSRF check
+import csurf from 'csurf';
+
+export const csrfProtection = csurf({
+    cookie: {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'strict', 
+      maxAge: 60 * 60 * 24 * 7 
+    },
+    ignoreMethods: ['GET', 'HEAD', 'OPTIONS'], 
   });
   

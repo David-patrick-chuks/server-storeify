@@ -1,8 +1,8 @@
-import { NextFunction, Request, Response } from "express";
+import { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import logger from "../config/logger";
 
 
-export const globalError = (err: Error, req: Request, res: Response, _next: NextFunction) => {
+export const globalError : ErrorRequestHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
     if (process.env.NODE_ENV === "development") {
         // In development, show full error details
         logger.error(err.stack);

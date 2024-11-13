@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import express, { Application } from "express";
 import helmet from "helmet"; 
 import { corsOptions } from "./config/cors";
-import { csrfProtection } from "./config/csrf";
+// import { csrfProtection } from "./config/csrf";
 import { connectDB } from "./config/db";
 import { MorganSetup } from "./config/morganSetup";
 import errorMiddleware from "./middleware/errorMiddleware";
@@ -27,7 +27,7 @@ const app: Application = express();
 connectDB();
 
 // csrf protection for any req expect GET
-app.use(csrfProtection);
+// app.use(csrfProtection);
 
 // Middleware setup
 app.use(helmet()); // Security headers
