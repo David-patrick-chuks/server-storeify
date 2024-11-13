@@ -2,10 +2,9 @@ import timeout from "connect-timeout";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import helmet from "helmet"; 
 import { corsOptions } from "./config/cors";
-// import { csrfProtection } from "./config/csrf";
 import { connectDB } from "./config/db";
 import { MorganSetup } from "./config/morganSetup";
 import errorMiddleware from "./middleware/errorMiddleware";
@@ -17,7 +16,9 @@ import { healthcareService } from "./services/HealthCheckController";
 import { csrfTokenGen } from "./services/csrfTokenGen";
 import { catchAll404Request } from "./utils/catchAll404Request";
 import { globalError } from "./utils/globalErrorHandler";
+import { csrfProtection } from "./config/csrf";
 // import xss from 'express-xss-sanitizer'
+
 
 dotenv.config();
 
@@ -50,13 +51,13 @@ app.use(MorganSetup);
 app.use("/api/v1/", limiter);
 
 // Route definitions
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/email', emailRoutes);
-app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/auth', csrfProtection, authRoutes);
+app.use('/api/v1/email',csrfProtection,  emailRoutes);
+app.use('/api/v1/user',csrfProtection,  userRoutes);
 
 
 // generate csrf token for any req expect GET
-app.get('/api/v1/csrf-token',csrfTokenGen );
+app.get('/api/v1/csrf-token',csrfProtection,csrfTokenGen);
 
 // Health check route
 app.get("/health", healthcareService);
