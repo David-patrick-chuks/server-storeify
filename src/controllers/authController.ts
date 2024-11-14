@@ -3,46 +3,59 @@ import { Request, Response } from 'express';
 import { getAuthUrl, getTokens, storeTokens, createJWT } from '../services/googleOAuth';
 import logger from '../config/logger';
 import User from '../models/User';
+import Joi from 'joi';
 
 // Login Route (use your static login credentials)
-// export const login = async (req: Request, res: Response): Promise<void> => {
-//   const { username, password } = req.body;
 
-//   try {
-//     // Find the user by username or email
-//     // const user = await User.findOne({ $or: [{ username }, { email: username }] });
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+});
 
-//     const user = await User.findOne({ username });
+export const login = async (req: Request, res: Response): Promise<void> => {
 
-//     if (!user) {
-//       res.status(401).json({ message: 'User not found' });
-//       return;
-//     }
 
-//     // Check if the password matches
-//     const isPasswordValid = await bcrypt.compare(password, user.password);
-//     if (!isPasswordValid) {
-//       res.status(401).json({ message: 'Invalid credentials' });
-//       return;
-//     }
+  const { error } = loginSchema.validate(req.body);
 
-//     // Generate JWT token
-//     const jwtToken = createJWT(user.email);
-//     res.cookie('jwt', jwtToken, {
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === 'production',
-//       sameSite: 'strict',
-//       maxAge: 15 * 24 * 60 * 60 * 1000 // 15 days
-//     });
+  if (error) {
+     res.status(400).json({ message: error.details[0].message })
+     return
+  }
 
-//     res.status(200).json({ message: 'Logged in successfully' });
-//     return;
-//   } catch (error) {
-//     console.error('Error during login:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//     return;
-//   }
-// };
+  const { email, password } = req.body;
+
+  try {
+    // Find the user by email in the db mongo database
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
+
+    // Check if the password matches
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      res.status(401).json({ message: 'Invalid credentials' });
+      return;
+    }
+    const googleAuthUrl = await getAuthUrl();
+    if (!googleAuthUrl) {
+       res.status(500).json({ message: 'Failed to generate Google OAuth2 URL' })
+       return
+    }
+    
+    return res.redirect(googleAuthUrl);
+
+    // res.status(200).json({ message: 'Logged in successfully' });
+   
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Internal server error' });
+    return;
+  }
+};
+
 
 
 
@@ -67,7 +80,16 @@ export interface GoogleProfile {
 
 // Google OAuth2 Callback
 export const oauth2Callback = async (req: Request, res: Response): Promise<void> => {
-  const { code } = req.query;
+  const { code, error, error_description } = req.query;
+
+  // Check if the user denied access
+  if (error) {
+    logger.error(`OAuth2 error: ${error} - ${error_description}`);
+  
+    // Redirect to a custom UI page with an access denied message
+    res.redirect(`${process.env.CLIENT_BASE_URL}/access-denied?error=${error}&description=${error_description}`);
+    return;
+  }
 
   if (!code) {
     res.status(400).send('No authorization code provided');
@@ -105,7 +127,7 @@ export const oauth2Callback = async (req: Request, res: Response): Promise<void>
     });
 
     logger.info('Authentication successful, redirecting to profile');
-    res.redirect('http://localhost:5173/about');
+    res.redirect(`${process.env.CLIENT_BASE_URL}/dashboard`);
   } catch (err) {
     if (err instanceof Error) {
       logger.error(`Error during Google OAuth2 callback: ${err.message}`, err.stack);
@@ -114,6 +136,7 @@ export const oauth2Callback = async (req: Request, res: Response): Promise<void>
     }
     res.status(500).send('Failed to authenticate');
   }
+
 };
 
 

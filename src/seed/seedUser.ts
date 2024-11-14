@@ -17,14 +17,15 @@ const seedUser = async () => {
     return;
   }
 
-  const hashedPassword = await bcrypt.hash('5686qwerty', 10);
-
+  
+  const hashedPassword = bcrypt.hashSync('5686qwerty', 10);
+  
   const newUser = new User({
     username: 'Chutek Telogines',
     email: 'Chutek@gmail.com',
     password: hashedPassword,
   });
-
+  
   await newUser.save();
   logger.info('User seeded successfully');
 };
@@ -36,4 +37,6 @@ const runSeeder = async () => {
   mongoose.connection.close(); // Close the connection after seeding
 };
 
-runSeeder();
+// runSeeder();
+
+
