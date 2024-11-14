@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUserProfile } from '../controllers/userController';
+import { getUserProfile,checkAuthentication } from '../controllers/userController';
 import { authenticateJWT } from '../utils/authMiddleware';
 
 const router = Router();
@@ -10,9 +10,7 @@ router.get('/profile', authenticateJWT, getUserProfile);
 // Route to update user profilep
 // router.put('/profile', authenticateJWT, updateUserProfile);
 
-router.get('/check-auth', authenticateJWT, (req, res) => {
-    res.status(200).json({ message: req.user });
-  });
+router.get('/check-auth', authenticateJWT, checkAuthentication);
 
-  
+
 export default router;

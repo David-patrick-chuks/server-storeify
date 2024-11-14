@@ -17,19 +17,33 @@ const refreshAccessToken = async () => {
 
 // Function to generate authentication URL
 export const getAuthUrl = async () => {
-  const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
+  const SCOPES = [
+    'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.send',
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile'];
+    'https://www.googleapis.com/auth/userinfo.profile'
+  ];
 
-  // await oauth2Client.revokeCredentials();
+  // Ensure the OAuth client is set up correctly
+  // if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  //   console.error('Google Client ID or Client Secret is missing!');
+  //   return null; // Avoid proceeding if credentials are missing
+  // }
 
-  return oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    redirect_uri: "http://localhost:5555/api/v1/auth/google/oauth2callback", // Ensure this is set correctly
-    prompt: 'consent' // Forces a refresh token prompt
-  });
+  try {
+    // Generate the Google OAuth2 URL with necessary parameters
+    const googleAuthUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      redirect_uri: process.env.REDIRECT_URI || "http://localhost:5555/api/v1/auth/google/oauth2callback", // Use environment variable for flexibility
+      prompt: 'consent' // Forces the user to re-consent
+    });
+
+    return googleAuthUrl;
+  } catch (error) {
+    console.error('Error generating Google Auth URL:', error);
+    return null;
+  }
 };
 
 // Function to get Google tokens from authorization code

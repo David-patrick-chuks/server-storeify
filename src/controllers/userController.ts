@@ -29,6 +29,24 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
 };
 
 
+////// checkAuthentication
+export const checkAuthentication = (req: Request, res: Response): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (req.user) {
+      // Send back user data if authentication is successful
+      // res.status(200).json({ message: req.user });
+      res.status(200).json({ message: "Authorized" });
+      resolve(); // Resolve the promise after the response is sent
+    } else {
+      // Unauthorized if user is not authenticated
+      res.status(401).json({ message: 'Unauthorized' });
+      resolve(); // Resolve the promise after the response is sent
+    }
+  });
+};
+
+
+
 // // Update User Profile
 // export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
 //     try {
