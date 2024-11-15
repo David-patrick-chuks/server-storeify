@@ -13,9 +13,9 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
       res.status(401).json({ message: 'Unauthorized' });
       return;
     }
-    console.log(`User ID: ${userId}`);
+    logger.info(`User ID: ${userId}`);
 
-    const user = await User.findOne({ googleId: userId }).select('-googleTokens -refreshToken'); // Exclude sensitive tokens
+    const user = await User.findOne({ googleId: userId }).select('-googleTokens -refreshToken -password -createdAt -updatedAt -googleId'); // Exclude sensitive tokens
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;
@@ -23,7 +23,7 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
 
     res.status(200).json(user); // Return user profile data
   } catch (error) {
-    console.error(error);
+    logger.info(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -35,7 +35,8 @@ export const checkAuthentication = (req: Request, res: Response): Promise<void> 
     if (req.user) {
       // Send back user data if authentication is successful
       // res.status(200).json({ message: req.user });
-      res.status(200).json({ message: "Authorized" });
+      logger.info("user auth data", req.user)
+      res.status(200).json({ message: "Authorized", data: req.user, success: true, id:  req.userId });
       resolve(); // Resolve the promise after the response is sent
     } else {
       // Unauthorized if user is not authenticated

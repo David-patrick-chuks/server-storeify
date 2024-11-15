@@ -9,26 +9,26 @@ const oauth2Client = new google.auth.OAuth2(
   "http://localhost:5555/api/v1/auth/google/oauth2callback"
 );
 
-const refreshAccessToken = async () => {
-  const response = await oauth2Client.refreshAccessToken();
-  const newAccessToken = response.credentials.access_token;
-  return newAccessToken;
+export const refreshAccessToken = async (refreshToken: string): Promise<string> => {
+  try {
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const response = await oauth2Client.refreshAccessToken();
+    return response.credentials.access_token as string; // Return the new access token
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    throw new Error('Failed to refresh access token');
+  }
 };
-
 // Function to generate authentication URL
 export const getAuthUrl = async () => {
   const SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
+    "https://www.googleapis.com/auth/gmail.modify",
     'https://www.googleapis.com/auth/gmail.send',
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile'
+    'https://www.googleapis.com/auth/userinfo.profile',
+    "https://www.googleapis.com/auth/contacts.readonly"
   ];
-
-  // Ensure the OAuth client is set up correctly
-  // if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  //   console.error('Google Client ID or Client Secret is missing!');
-  //   return null; // Avoid proceeding if credentials are missing
-  // }
 
   try {
     // Generate the Google OAuth2 URL with necessary parameters
@@ -46,14 +46,6 @@ export const getAuthUrl = async () => {
   }
 };
 
-// Function to get Google tokens from authorization code
-// export const getTokens = async (code: string) => {
-//   const { tokens } = await oauth2Client.getToken(code);  // OAuth2 exchange code for tokens
-//   oauth2Client.setCredentials(tokens); // Store tokens for later use
-//   const profile = await oauth2Client.request({ url: 'https://www.googleapis.com/oauth2/v2/userinfo' });
-//   const userData = { tokens, profile: profile.data }
-//   return userData
-// };
 
 export interface GoogleTokens {
   access_token: string;
@@ -71,27 +63,23 @@ export interface GoogleProfile {
   picture?: string;
 }
 
-// Function to get Google tokens from authorization code
 export const getTokens = async (code: string): Promise<{ tokens: GoogleTokens; profile: GoogleProfile }> => {
   try {
-    // Exchange authorization code for tokens
     const { tokens } = await oauth2Client.getToken(code);
 
-    // Check if access_token is available
     if (!tokens.access_token) {
       console.error('Access token not found:', tokens);
       throw new Error('Failed to retrieve access token');
     }
 
-    // Ensure the tokens are set for future requests
     oauth2Client.setCredentials(tokens);
 
     // Fetch the user's profile information
     const { data: profileData } = await oauth2Client.request<GoogleProfile>({
       url: 'https://www.googleapis.com/oauth2/v2/userinfo',
       headers: {
-        Authorization: `Bearer ${tokens.access_token}`
-      }
+        Authorization: `Bearer ${tokens.access_token}`,
+      },
     });
 
     return {
@@ -112,25 +100,6 @@ export const getTokens = async (code: string): Promise<{ tokens: GoogleTokens; p
 };
 
 
-// Function to store user details in MongoDB
-// export const storeTokens = async (userEmail: string, tokens: any) => {
-//   const user = await User.findOneAndUpdate({ email: userEmail }, { googleTokens: tokens.access_token, refreshToken: tokens.refresh_token }, { new: true, upsert: true });
-//   return user;
-// };
-
-
-// interface GoogleProfile {
-//   id: string;
-//   email: string;
-//   picture?: string;
-//   name?: string;
-// }
-
-// interface GoogleTokens {
-//   access_token?: string | null; // Allow undefined or null
-//   refresh_token?: string | null;
-// }
-
 
 // Function to store user details in MongoDB
 export const storeTokens = async (profile: GoogleProfile, tokens: GoogleTokens) => {
@@ -145,23 +114,32 @@ export const storeTokens = async (profile: GoogleProfile, tokens: GoogleTokens) 
     throw new Error('Profile must contain an email and Google ID');
   }
 
+  if (!accessToken || !refreshToken) {
+    throw new Error('Tokens must contain both access and refresh tokens');
+  }
+
   // Store or update user details in the database
-  const user = await User.findOneAndUpdate(
-    { email },
-    {
-      googleId: id,
-      username: name || 'Google User',
-      email,
-      googleTokens: accessToken,
-      refreshToken: refreshToken,
-      googlePicture: picture || null,
-    },
-    { new: true, upsert: true }
-  );
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      {
+        googleId: id,
+        username: name || 'Google User', // Default username if name is not provided
+        email,
+        googleTokens: accessToken, // Store the access token
+        refreshToken: refreshToken, // Store the refresh token
+        googlePicture: picture || null, // Optional profile picture
+        tokenExpiryDate: Date.now() + 1800 * 1000, // Set the expiry date to 30 minutes from now
+      },
+      { new: true, upsert: true } // Ensure we get the updated user, and insert if not found
+    );
 
-  return user;
+    return user;
+  } catch (err) {
+    console.error('Error storing tokens:', err);
+    throw new Error('Failed to store user tokens');
+  }
 };
-
 
 // Function to create JWT token
 // Create JWT including accessToken
@@ -180,4 +158,99 @@ export const sendEmail = async (to: string, subject: string, body: string) => {
     },
   });
   return res;
+};
+
+
+// Function to retrieve tokens from the database for a specific user using googleId (userId)
+const getTokensFromDB = async (userId: string) => {
+  try {
+    // Query the database for the user by googleId (userId passed as parameter)
+    const user = await User.findOne({ googleId: userId }).select('googleTokens refreshToken tokenExpiryDate');
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Return the user's tokens and token expiry date
+    return {
+      access_token: user.googleTokens,
+      refresh_token: user.refreshToken,
+      expiry_date: user.tokenExpiryDate,
+    };
+  } catch (error) {
+    console.error('Error retrieving tokens from database:', error);
+    throw new Error('Failed to retrieve tokens');
+  }
+};
+
+
+// Function to update the tokens in the database for a specific user
+const updateTokensInDB = async (userId: string, newAccessToken: string, newRefreshToken: string, newExpiryDate: number) => {
+  try {
+    // Find the user by googleId (userId) and update their tokens and expiry date
+    const updatedUser = await User.findOneAndUpdate(
+      { googleId: userId }, // Query to find the user by googleId
+      {
+        googleTokens: newAccessToken, // Update access token
+        refreshToken: newRefreshToken, // Update refresh token
+        tokenExpiryDate: newExpiryDate, // Update token expiry date
+      },
+      { new: true } // This option ensures that the returned document is the updated one
+    );
+
+    if (!updatedUser) {
+      throw new Error('User not found or failed to update');
+    }
+
+    console.log('Tokens updated successfully:', updatedUser);
+    return updatedUser;  // Return the updated user document, or you can return just the updated tokens if needed
+  } catch (error) {
+    console.error('Error updating tokens in database:', error);
+    throw new Error('Failed to update tokens');
+  }
+};
+
+
+interface Tokens {
+  access_token?: string | null;
+  refresh_token?: string | null;
+  expiry_date?: number | null | undefined;
+}
+
+
+export const checkAndRefreshAccessToken = async (userId: string): Promise<string | null> => {
+  try {
+    // Retrieve tokens from the database
+    const { access_token, refresh_token, expiry_date }: Tokens = await getTokensFromDB(userId);
+
+    // Check if the access token is expired
+    const currentTime = Date.now();
+    if (expiry_date && expiry_date < currentTime) {
+      console.log('Access token expired, refreshing...');
+
+      if (refresh_token === null) {
+        throw new Error('Refresh token is null, cannot refresh access token');
+      }
+
+      // Refresh the access token
+      const newAccessToken = await refreshAccessToken(refresh_token);
+
+      // Get a new expiry date (usually, 1 hour from now)
+      const newExpiryDate = currentTime + 3600 * 1000; // Assuming 1 hour expiry
+
+      // Update the tokens in the database
+      const updatedUser = await updateTokensInDB(userId, newAccessToken, refresh_token, newExpiryDate);
+
+      // Return the new access token
+      return updatedUser.googleTokens;
+
+    } else {
+      console.log('Access token is still valid.');
+      return access_token;
+      // Return the current access token if it's valid
+    }
+  } catch (error) {
+    console.error('Error checking and refreshing access token:', error);
+    throw new Error('Failed to validate or refresh access token');
+  }
 };

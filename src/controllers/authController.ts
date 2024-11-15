@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
-import { getAuthUrl, getTokens, storeTokens, createJWT } from '../services/googleOAuth';
+import { getAuthUrl, getTokens, storeTokens, createJWT, refreshAccessToken } from '../services/googleOAuth';
 import logger from '../config/logger';
 import User from '../models/User';
 import Joi from 'joi';
@@ -81,14 +81,12 @@ export interface GoogleProfile {
 
 
 // Google OAuth2 Callback
+
 export const oauth2Callback = async (req: Request, res: Response): Promise<void> => {
   const { code, error, error_description } = req.query;
 
-  // Check if the user denied access
   if (error) {
     logger.error(`OAuth2 error: ${error} - ${error_description}`);
-
-    // Redirect to a custom UI page with an access denied message
     res.redirect(`${process.env.CLIENT_BASE_URL}/access-denied?error=${error}&description=${error_description}`);
     return;
   }
@@ -101,26 +99,37 @@ export const oauth2Callback = async (req: Request, res: Response): Promise<void>
   try {
     const { tokens, profile }: { tokens: GoogleTokens; profile: GoogleProfile } = await getTokens(code as string);
 
+    logger.info(tokens)
+    logger.debug(tokens)
+    logger.info(tokens.access_token)
+    logger.debug(tokens.access_token)
     if (!tokens || !tokens.access_token) {
       logger.error('Access token not found');
       res.status(400).send('Failed to retrieve access token');
       return;
     }
 
-    // Ensure profile has an email
+    // If the token has expired, refresh it
+    if (tokens.expiry_date && Date.now() >= tokens.expiry_date) {
+      if (tokens.refresh_token) {
+        const newAccessToken = await refreshAccessToken(tokens.refresh_token);
+        tokens.access_token = newAccessToken;
+      } else {
+        logger.error('Refresh token is missing or invalid');
+        res.status(400).send('Failed to refresh access token');
+        return;
+      }
+    }
+
     if (!profile || !profile.email) {
       logger.error('Email not found in Google profile');
       res.status(400).send('Failed to retrieve email from Google profile');
       return;
     }
 
-    // Store tokens and user profile info in the database
     await storeTokens(profile, tokens);
 
-    // Generate JWT token with googleId and accessToken
-    const jwtToken = createJWT(profile.id, tokens.access_token); // Include access_token in the JWT
-
-    // Set JWT token in cookies
+    const jwtToken = createJWT(profile.id, tokens.access_token);
     res.cookie('jwt', jwtToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -138,8 +147,8 @@ export const oauth2Callback = async (req: Request, res: Response): Promise<void>
     }
     res.status(500).send('Failed to authenticate');
   }
-
 };
+
 
 
 // Redirect to Google OAuth2 for login
@@ -167,14 +176,3 @@ export const logout = (req: Request, res: Response) => {
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
-
-
-// export const logout = (req: Request, res: Response) => {
-//   req.session.destroy((err) => {
-//     if (err) {
-//       return res.status(500).json({ message: 'Logout failed' });
-//     }
-//     res.clearCookie('connect.sid');
-//     res.status(200).json({ message: 'Logged out successfully' });
-//   });
-// };

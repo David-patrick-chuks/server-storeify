@@ -1,5 +1,6 @@
 
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import User from '../models/User';
 import dotenv from 'dotenv';
 import { connectDB } from '../config/db';
@@ -40,3 +41,19 @@ const runSeeder = async () => {
 // runSeeder();
 
 
+// 1557:gk-EWp2gtvvD-m-F3YehQ-P5ctOKlwVDyPq-Jn_5JDvG3g-RzwQasviXYagaJp7X
+ 
+function getGravatarUrl(email : string, size : number = 80) {
+    const trimmedEmail = email.trim().toLowerCase();
+    const hash = crypto.createHash('sha256').update(trimmedEmail).digest('hex');
+    console.log(hash);
+    
+    return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+}
+ 
+// Example usage
+const email = 'pd3072894@gmail.com';
+const size = 200; // Optional size parameter
+const gravatarUrl = getGravatarUrl(email, size);
+ 
+console.log('Gravatar URL:', gravatarUrl);
