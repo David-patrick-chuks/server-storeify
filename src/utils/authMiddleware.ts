@@ -18,6 +18,7 @@ declare global {
 // In this case, only Chutek@gmail.com can access
 export const isAuthorized = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    
     const user = req.user; // Now `user` is recognized on the request object
 
     // Ensure that the user object and googleId are present
@@ -47,7 +48,6 @@ export const isAuthorized = async (req: Request, res: Response, next: NextFuncti
 // Middleware to authenticate JWT
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.cookies.jwt;
-
   if (!token) {
     res.status(401).json({ message: 'No token provided. Unauthorized access.' });
     return;

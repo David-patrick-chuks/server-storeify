@@ -12,20 +12,19 @@ const loginSchema = Joi.object({
   password: Joi.string().min(6).required(),
 });
 
+
 export const login = async (req: Request, res: Response): Promise<void> => {
-
-
   const { error } = loginSchema.validate(req.body);
 
   if (error) {
-    res.status(400).json({ message: error.details[0].message })
-    return
+    res.status(400).json({ message: error.details[0].message });
+    return;
   }
 
   const { email, password } = req.body;
 
   try {
-    // Find the user by email in the db mongo database
+    // Find the user by email in the MongoDB database
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -39,20 +38,35 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ message: 'Invalid credentials' });
       return;
     }
-    // const googleAuthUrl = await getAuthUrl();
-    // if (!googleAuthUrl) {
-    //   res.status(500).json({ message: 'Failed to generate Google OAuth2 URL' })
-    //   return
-    // }
 
-    logger.info('User Logged in successfully');
-    // logger.info('Redirecting to Google OAuth URL:', googleAuthUrl);
+    // Check if user has a Google ID
+    if (user.googleId && user.googleTokens) {
+      const jwtToken = createJWT(user.googleId, user.googleTokens);
+      res.cookie('jwt', jwtToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      });
+  
+      logger.info('User logged in successfully with Google ID');
+      res.status(200).json({ message: 'Logged in successfully' });
+      return;
+    }
     
-    res.status(200).json({ message: 'Logged in successfully' });
-    return
+    const authUrl = await getAuthUrl();
+    if (authUrl) {
+      logger.info('Redirecting to Google OAuth URL');
+      res.status(200).json({ url: authUrl })
+    } else {
+      res.status(500).json({ message: 'Failed to generate Google OAuth2 URL' });
+ 
+    }
+    
+    return;
 
   } catch (error) {
-    console.error('Error during login:', error);
+    logger.error('Error during login:', error);
     res.status(500).json({ message: 'Internal server error' });
     return;
   }
@@ -175,4 +189,6 @@ export const logout = (req: Request, res: Response) => {
 
   res.status(200).json({ message: 'Logged out successfully' });
 };
+
+
 

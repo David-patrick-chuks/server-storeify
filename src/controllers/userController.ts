@@ -1,7 +1,9 @@
 // controllers/userController.ts
+import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import User from '../models/User';
 import logger from '../config/logger';
+import Joi from 'joi';
 
 // Get User Profile
 
@@ -48,39 +50,61 @@ export const checkAuthentication = (req: Request, res: Response): Promise<void> 
 
 
 
-// // Update User Profile
-// export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
-//     try {
-//       const userId = req.userId; // Get userId from JWT middleware
-//       if (!userId) {
-//         res.status(401).json({ message: 'Unauthorized' });
-//         return;
-//       }
-  
-//       const { username, email, googlePicture } = req.body;
-  
-//       const updatedUser = await User.findByIdAndUpdate(
-//         userId,
-//         {
-//           $set: {
-//             username,
-//             email,
-//             googlePicture,
-//           },
-//         },
-//         { new: true }
-//       ).select('-password'); // Do not return password in response
-  
-//       if (!updatedUser) {
-//         res.status(404).json({ message: 'User not found' });
-//         return;
-//       }
-  
-//       res.status(200).json(updatedUser); // Return the updated user data
-//     } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ message: 'Server error' });
-//     }
-//   };
-  
-  
+
+const updatePasswordSchema = Joi.object({
+  currentPassword: Joi.string().min(8).required(),
+  newPassword: Joi.string().min(8).required().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/).messages({
+    'string.pattern.base': 'New password must contain at least one uppercase letter, one lowercase letter, and one number.',
+  }),
+});
+
+
+
+
+export const updatePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Validate the request body using Joi schema
+    const { error } = updatePasswordSchema.validate(req.body);
+    if (error) {
+      res.status(400).json({ message: error.details[0].message });
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Assuming user ID is stored in the session or JWT token
+    const googleId = req.userId;
+    if (!googleId) {
+      res.status(400).json({ message: 'User ID is missing or invalid.' });
+      // res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // Fetch user from the database
+    const user = await User.findOne({ googleId });
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    // Check if the current password is correct
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      res.status(401).json({ message: 'Current password is incorrect' });
+      return;
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password in the database
+    user.password = hashedNewPassword;
+    await user.save();
+
+    logger.info(`User with  ID: ${googleId} successfully updated their password`);
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    logger.error('Error updating password:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

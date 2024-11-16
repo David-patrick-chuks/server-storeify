@@ -8,7 +8,9 @@ interface IUser extends Document {
   googleTokens: string | null;
   refreshToken: string | null;
   googlePicture?: string | null;
-  tokenExpiryDate?: number | null; // New field to store token expiry date
+  tokenExpiryDate?: number | null;
+  emailCountToday: number; // Track the number of emails sent today
+  lastEmailSentDate: Date; // Track the timestamp of the last email sent
 }
 
 const userSchema = new Schema<IUser>(
@@ -16,14 +18,16 @@ const userSchema = new Schema<IUser>(
     username: { type: String, default: null },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    googleId: { type: String }, // Google ID for OAuth
-    googlePicture: { type: String, default: null }, // Google profile picture URL
-    googleTokens: { type: String, default: null }, // Google access token
-    refreshToken: { type: String, default: null }, // Google refresh token
-    tokenExpiryDate: { type: Number, default: null }, // New field for token expiry date
+    googleId: { type: String },
+    googlePicture: { type: String, default: null },
+    googleTokens: { type: String, default: null },
+    refreshToken: { type: String, default: null },
+    tokenExpiryDate: { type: Number, default: null },
+    emailCountToday: { type: Number, default: 0 }, // New field
+    lastEmailSentDate: { type: Date, default: new Date() }, // New field
   },
   {
-    timestamps: true, // Automatically adds `createdAt` and `updatedAt` fields
+    timestamps: true,
   }
 );
 

@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post('/login', login);
 router.post('/logout', logout);
+
 // Google OAuth2 Callback
 router.get('/google/oauth2callback', oauth2Callback);
 

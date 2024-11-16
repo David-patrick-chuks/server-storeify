@@ -12,7 +12,7 @@ dotenv.config(); // Make sure to load environment variables
 
 // Seed user function
 const seedUser = async () => {
-  const existingUser = await User.findOne({ email: 'Chutek@gmail.com' });
+  const existingUser = await User.findOne({ email: 'pd3072894@gmail.com' });
   if (existingUser) {
     logger.error('User already exists');
     return;
@@ -22,8 +22,8 @@ const seedUser = async () => {
   const hashedPassword = bcrypt.hashSync('5686qwerty', 10);
   
   const newUser = new User({
-    username: 'Chutek Telogines',
-    email: 'Chutek@gmail.com',
+    // username: '',
+    email: 'pd3072894@gmail.com',
     password: hashedPassword,
   });
   
@@ -38,7 +38,7 @@ const runSeeder = async () => {
   mongoose.connection.close(); // Close the connection after seeding
 };
 
-// runSeeder();
+runSeeder();
 
 
 // 1557:gk-EWp2gtvvD-m-F3YehQ-P5ctOKlwVDyPq-Jn_5JDvG3g-RzwQasviXYagaJp7X

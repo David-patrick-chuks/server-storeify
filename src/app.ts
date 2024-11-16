@@ -12,6 +12,7 @@ import { limiter } from "./middleware/limiter";
 import authRoutes from './routes/auth';
 import emailRoutes from './routes/emails';
 import userRoutes from './routes/userRoutes';
+import projectRoutes from './routes/projectRoutes';
 import { healthcareService } from "./services/HealthCheckController";
 import { csrfTokenGen } from "./services/csrfTokenGen";
 import { catchAll404Request } from "./utils/catchAll404Request";
@@ -54,6 +55,7 @@ app.use("/api/v1/", limiter);
 app.use('/api/v1/auth', csrfProtection, authRoutes);
 app.use('/api/v1/email',csrfProtection,  emailRoutes);
 app.use('/api/v1/user',csrfProtection,  userRoutes);
+app.use('/api/v1/projects',csrfProtection,  projectRoutes);
 
 
 // generate csrf token for any req expect GET
