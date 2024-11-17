@@ -224,62 +224,61 @@ export const getEmailsTotal = async (req: Request, res: Response): Promise<void>
 
 
 
-
 export const sendBulkEmailController = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     const googleId = req.userId;
-    if (!userId) {
-      res.status(400).json({ message: 'User ID is missing or invalid.' });
-      return;
+
+    if (!userId || !googleId) {
+       res.status(400).json({ message: 'User ID or Google ID is missing or invalid.' });
+       return
     }
 
-    if (!googleId) {
-      res.status(400).json({ message: 'Google ID is missing or invalid.' });
-      return;
-    }
     const canSendEmail = await checkAndUpdateEmailCount(googleId);
-    // Check if the user can send emails based on their daily limit
+
     if (!canSendEmail) {
-      res.status(429).json({ message: 'Daily email limit reached. Please try again after 24 hours.' });
-      return;
+       res.status(429).json({ message: 'Daily email limit reached. Please try again after 24 hours.' });
+       return
     }
 
     const accessToken = await checkAndRefreshAccessToken(userId);
     if (!accessToken) {
-      res.status(401).json({ message: 'Unauthorized, no access token provided.' });
-      return;
+       res.status(401).json({ message: 'Unauthorized, no access token provided.' });
+       return
     }
 
     const oauth2Client = new google.auth.OAuth2();
     oauth2Client.setCredentials({ access_token: accessToken });
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-    const { subject, messageBody, recipients } = req.body; // recipients should be an array of emails
+    const { subject, messageBody, recipients } = req.body;
 
     if (!recipients || recipients.length === 0) {
-      res.status(400).json({ message: 'Recipient list cannot be empty.' });
-      return;
+       res.status(400).json({ message: 'Recipient list cannot be empty.' })
+       return
     }
 
-    // Iterate through the list of recipients and send the email
     for (const recipient of recipients) {
       const email = `
         From: "Your Name" <your-email@gmail.com>
         To: ${recipient}
         Subject: ${subject}
-        
+        Content-Type: text/plain; charset=UTF-8
+        MIME-Version: 1.0
+
         ${messageBody}
       `;
 
       try {
+        const encodedEmail = Buffer.from(email).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        console.log(`Sending email to ${recipient}`);
         await gmail.users.messages.send({
           userId: 'me',
           requestBody: {
-            raw: Buffer.from(email).toString('base64'),
+            raw: encodedEmail,
           },
         });
+        console.log(`Email sent to ${recipient}`);
       } catch (error) {
         console.error(`Error sending email to ${recipient}:`, error);
       }
@@ -294,8 +293,6 @@ export const sendBulkEmailController = async (req: Request, res: Response): Prom
     });
   }
 };
-
-
 
 
 
