@@ -38,7 +38,7 @@ export const checkAuthentication = (req: Request, res: Response): Promise<void> 
       // Send back user data if authentication is successful
       // res.status(200).json({ message: req.user });
       logger.info("user auth data", req.user)
-      res.status(200).json({ message: "Authorized", data: req.user, success: true, id:  req.userId });
+      res.status(200).json({ message: "Authorized", data: req.user, success: true, id: req.userId });
       resolve(); // Resolve the promise after the response is sent
     } else {
       // Unauthorized if user is not authenticated
@@ -105,6 +105,39 @@ export const updatePassword = async (req: Request, res: Response): Promise<void>
     res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
     logger.error('Error updating password:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const updateIsNotify = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Validate the request body using Joi schema
+
+
+    const { emailNotify } = req.body;
+
+    // Assuming user ID is stored in the session or JWT token
+    const googleId = req.userId;
+    if (!googleId) {
+      res.status(400).json({ message: 'User ID is missing or invalid.' });
+      // res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // Fetch user from the database
+    const user = await User.findOne({ googleId });
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    user.notify = emailNotify;
+    await user.save();
+
+    logger.info(`User with  ID: ${googleId} successfully updated their notify by mail`);
+    res.status(200).json({ message: 'Notify by mail updated successfully' });
+  } catch (error) {
+    logger.error('Error updating notify by mail:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

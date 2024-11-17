@@ -1,11 +1,14 @@
 import { Router } from 'express';
-import { getUserProfile,checkAuthentication, updatePassword } from '../controllers/userController';
+import { getUserProfile, updateIsNotify, checkAuthentication, updatePassword } from '../controllers/userController';
 import { authenticateJWT } from '../utils/authMiddleware';
 
 const router = Router();
 
 // Route to get user profile
 router.get('/profile', authenticateJWT, getUserProfile);
+
+router.put('/email-notify', authenticateJWT, updateIsNotify);
+
 router.put('/update-password', authenticateJWT, updatePassword);
 
 

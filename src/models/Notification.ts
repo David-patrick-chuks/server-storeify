@@ -4,6 +4,7 @@ export interface INotification extends Document {
   projectId: string;  // Project ID
   clientEmail: string; // Client's email
   message: string;     // Notification message
+  snippet: string;     // Notification message
   isRead: boolean;     // Track if the client has read the notification
   createdAt: Date;     // Date the notification was created
 }
@@ -16,6 +17,10 @@ const notificationSchema = new Schema<INotification>({
     required: true,
   },
   clientEmail: {
+    type: String,
+    required: true,
+  },
+  snippet: {
     type: String,
     required: true,
   },

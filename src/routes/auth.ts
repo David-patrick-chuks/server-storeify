@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { logout, login, oauth2Callback, redirectToGoogleLogin } from '../controllers/authController';
+import { logout, login, oauth2Callback,forgotPassword, resetPassword,redirectToGoogleLogin } from '../controllers/authController';
 
 const router = express.Router();
 
@@ -9,6 +9,8 @@ const router = express.Router();
 router.post('/login', login);
 router.post('/logout', logout);
 
+router.post('/forgot-password', forgotPassword); // Route for forgot password
+router.post('/reset-password', resetPassword); // Route for forgot password
 // Google OAuth2 Callback
 router.get('/google/oauth2callback', oauth2Callback);
 

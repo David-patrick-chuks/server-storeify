@@ -1,9 +1,12 @@
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import { getAuthUrl, getTokens, storeTokens, createJWT, refreshAccessToken } from '../services/googleOAuth';
 import logger from '../config/logger';
 import User from '../models/User';
 import Joi from 'joi';
+import { sendPasswordResetEmail } from '../services/resetMailSenderByGmail';
+import { hashPassword } from '../utils/hashing';
 
 // Login Route (use your static login credentials)
 
@@ -192,3 +195,65 @@ export const logout = (req: Request, res: Response) => {
 
 
 
+
+
+
+
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' })
+      return
+    }
+
+    // Generate a password reset token and expiry time
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpiry = new Date(Date.now() + 30 * 60 * 1000); // Token valid for 30 minutes
+    await user.save();
+
+    // Create the reset link
+    const resetLink = `${process.env.CLIENT_BASE_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+    // Send password reset email
+    await sendPasswordResetEmail(email, resetLink); // Use the email service function
+
+    res.status(200).json({ message: 'Password reset link sent successfully' });
+  } catch (error: unknown) {
+    console.error('Error in forgot password:', error);
+    res.status(400).json({ message: 'Error sending password reset email' });
+  }
+};
+
+
+
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const { token, email, newPassword } = req.body;
+
+  try {
+    const user = await User.findOne({ email, resetPasswordToken: token });
+
+    // Check if the user exists and if resetPasswordExpiry is valid
+    if (!user || (user.resetPasswordExpiry && user.resetPasswordExpiry < new Date())) {
+      res.status(400).json({ message: 'Invalid or expired token' })
+      return
+    }
+
+    // Hash new password (make sure to use your hashing function)
+    user.password = await hashPassword(newPassword); // Ensure this function is implemented
+    user.resetPasswordToken = undefined; // Clear token
+    user.resetPasswordExpiry = undefined; // Clear expiry
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error: unknown) {
+    console.error('Error resetting password:', error);
+    res.status(400).json({ message: 'Error resetting password' });
+  }
+};

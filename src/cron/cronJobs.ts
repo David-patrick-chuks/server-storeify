@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import Project from '../models/Projects';
 import Notification from '../models/Notification';
 import logger from "../config/logger";
+import User from '../models/User';
 
 // Set up the cron job to run every hour
 cron.schedule('0 * * * *', async () => {
@@ -21,9 +22,14 @@ cron.schedule('0 * * * *', async () => {
 
         if (projects.length > 0) {
             // Fetch admin email from environment variable
-            const adminEmail = process.env.ADMIN_EMAIL;
+            const email = process.env.ADMIN_EMAIL;
 
-            if (adminEmail) {
+            if (email) {
+                const admin = await User.findOne({ email });
+                if (!admin) {
+                    logger.error('Admin email not found.');
+                    return
+                }
                 // Iterate through each project
                 for (const project of projects) {
                     // Check if a notification for this project already exists
@@ -36,7 +42,9 @@ cron.schedule('0 * * * *', async () => {
                         // If no notification exists, send email to admin and save notification
 
                         // Send reminder email to admin
-                        await sendReminderEmail(adminEmail, project);
+                        if (admin.notify === true) {
+                            await sendReminderEmail(email, project);
+                        }
 
                         // Save a notification to the database
                         await saveNotification(project.clientEmail, project);  // Save notification for the client
@@ -159,6 +167,7 @@ async function saveNotification(clientEmail: string, project: any) {
         const notification = new Notification({
             projectId: project._id,  // Project reference
             clientEmail: clientEmail,
+            snippet: ` Hello!, Your client ${clientEmail} project will be due in the next 48 Hours`,
             message: `
         <html>
           <head>
