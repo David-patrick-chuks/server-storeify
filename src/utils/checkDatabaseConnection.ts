@@ -1,5 +1,5 @@
-import { connection } from "mongoose"; // Mongoose connection object
-import logger from "../config/logger"; // Assuming you have a logger configured
+import { connection } from "mongoose";
+import logger from "../config/logger"; 
 
 // Custom function to check database connection
 export const checkDatabaseConnection = async (): Promise<void> => {
@@ -9,3 +9,4 @@ export const checkDatabaseConnection = async (): Promise<void> => {
     throw new Error(errorMessage);
   }
 };
+ 

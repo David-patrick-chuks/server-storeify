@@ -1,26 +1,27 @@
 import { Request, Response } from 'express';
 import { checkAndRefreshAccessToken, sendEmail } from '../services/googleOAuth';
-import { google } from 'googleapis';
+import { google, gmail_v1 } from 'googleapis';
 import logger from '../config/logger';
 import sharp from 'sharp';
 
 // Helper function to generate a random color in hex format
-const getRandomColor = (): string => {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-};
+// Helper function to generate a random muted color (pastel-like)
+const getRandomMutedColor = (): string => {
+  // Generate random values for Hue (0 to 360), Saturation (40% to 60%), and Lightness (60% to 80%)
+  const hue = Math.floor(Math.random() * 360); // Random color hue
+  const saturation = Math.floor(Math.random() * 21) + 40; // Saturation between 40% and 60%
+  const lightness = Math.floor(Math.random() * 21) + 60; // Lightness between 60% and 80%
 
+  // Convert HSL to hex
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
 // Function to generate the avatar
 const generateAvatar = async (email: string, size: number = 100): Promise<string> => {
   // Extract the first letter of the email (before '@')
   const initial = email.trim().toLowerCase().split('@')[0].charAt(0).toUpperCase();
 
   // Generate a random background color
-  const bgColor = getRandomColor();
+  const bgColor = getRandomMutedColor();
 
   // Create the avatar image using sharp
   const image = await sharp({
@@ -47,7 +48,7 @@ const generateAvatar = async (email: string, size: number = 100): Promise<string
 
   // Convert the buffer to a Base64-encoded string
   const base64Image = image.toString('base64');
-  
+
   // Return the Base64 image as a data URL
   return `data:image/png;base64,${base64Image}`;
 };
@@ -119,41 +120,51 @@ export const getEmailsWithPagination = async (req: Request, res: Response): Prom
 
     // Fetch detailed email information
     const emailDetailsPromises = messages.map(async (message) => {
-      const email = await gmail.users.messages.get({
-        userId: 'me',
-        id: message.id!,
-      });
-
-      // logger.info("All email messages",email)
-      const senderHeader = email.data.payload?.headers?.find((header) => header.name === 'From')?.value || '';
-      const messageId = email.data.payload?.headers?.find((header) => header.name === 'Message-ID')?.value || '';
-      const senderEmail = extractEmailFromHeader(senderHeader);
-      const senderName = extractName(senderHeader);
-      // const senderProfileImage = senderEmail ? await getGravatarUrl(senderEmail) : null;
-      const senderProfileImage = senderEmail ? await generateAvatar(senderEmail) : null;
-
-      const receivedDate = email.data.internalDate ? new Date(parseInt(email.data.internalDate)).toISOString() : null;
-
-      return {
-        emails:email,
-        id: email.data.id,
-        messageId,
-        threadId: email.data.threadId,
-        subject: email.data.payload?.headers?.find((header) => header.name === 'Subject')?.value,
-         senderEmail,
-        senderName,
-        to: email.data.payload?.headers?.find((header) => header.name === 'To')?.value,
-        snippet: email.data.snippet,
-        senderProfileImage,
-        receivedDate,
-      };
+      try {
+        const email = await gmail.users.messages.get({
+          userId: 'me',
+          id: message.id!,
+        });
+    
+        const senderHeader = email.data.payload?.headers?.find((header) => header.name === 'From')?.value || '';
+        const messageId = email.data.payload?.headers?.find((header) => header.name === 'Message-ID')?.value || '';
+        const senderEmail = extractEmailFromHeader(senderHeader);
+        const senderName = extractName(senderHeader);
+        const senderProfileImage = senderEmail ? await generateAvatar(senderEmail) : null;
+        
+        const receivedDate = email.data.internalDate ? new Date(parseInt(email.data.internalDate)).toISOString() : null;
+        const isUnread = email.data.labelIds?.includes('UNREAD') ?? false;
+        const isSentByMe = email.data.labelIds?.includes('SENT') ?? false;
+        const replyReceiverHeader = email.data.payload?.headers?.find((header) => header.name === 'To')?.value || '';
+        const replyProfileImage = replyReceiverHeader ? await generateAvatar(replyReceiverHeader) : null;
+    
+        return {
+          emails: email,
+          id: email.data.id,
+          messageId,
+          threadId: email.data.threadId,
+          subject: email.data.payload?.headers?.find((header) => header.name === 'Subject')?.value,
+          senderEmail : isSentByMe ? replyReceiverHeader : senderEmail,
+          senderName : isSentByMe ? "You replied to:" : senderName,
+          to: email.data.payload?.headers?.find((header) => header.name === 'To')?.value,
+          snippet: email.data.snippet,
+          senderProfileImage: isSentByMe ? replyProfileImage : senderProfileImage,
+          receivedDate,
+          isUnread,
+        };
+      } catch (error) {
+        console.error(`Error fetching email with ID ${message.id}:`, error);
+        return null; // Handle errors gracefully
+      }
     });
-
-    const emailDetails = await Promise.all(emailDetailsPromises);
-
+    
+    const emailDetails = (await Promise.all(emailDetailsPromises)).filter((email) => email !== null);    
     // Send response with pagination
     res.status(200).json({
-      emailAddress, historyId, messagesTotal, threadsTotal,
+      emailAddress,
+      historyId,
+      messagesTotal,
+      threadsTotal,
       message: 'Emails fetched successfully',
       emails: emailDetails,
       pagination: {
@@ -170,6 +181,7 @@ export const getEmailsWithPagination = async (req: Request, res: Response): Prom
     });
   }
 };
+
 
 export const getEmailsTotal = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -199,7 +211,7 @@ export const getEmailsTotal = async (req: Request, res: Response): Promise<void>
     res.status(200).json({
       emailAddress, historyId, messagesTotal, threadsTotal,
       message: 'Toatal Email messages successfully',
-     
+
     });
   } catch (error: any) {
     console.error('Error fetching emails:', error);
@@ -379,74 +391,136 @@ export const sendBulkEmailController = async (req: Request, res: Response): Prom
 
 
 
+const decodeBase64 = (base64urlString: string): string => {
+  let base64String = base64urlString
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
 
+  const padding = base64String.length % 4;
+  if (padding) {
+      base64String += '='.repeat(4 - padding);
+  }
+
+  return Buffer.from(base64String, 'base64').toString('utf-8');
+};
+
+const cleanEmailContent = (rawContent: string): string => {
+  let cleanedContent = decodeBase64(rawContent);
+
+  // Clean unwanted characters
+  cleanedContent = cleanedContent.replace(/â/g, "'");  // example of cleaning unwanted characters
+  cleanedContent = cleanedContent.replace(/â/g, "“").replace(/â/g, "”");
+  cleanedContent = cleanedContent.replace(/â/g, ""); // Remove other unwanted characters
+
+  // Optionally, process the <a> tags if you want to modify them
+  cleanedContent = cleanedContent.replace(/<a\s+(?![^>]*target=)/g, '<a target="_blank" ');
+
+  return cleanedContent;
+};
+
+
+function extractEmailBody(parts: any[]): string {
+  let emailBody = '';
+
+  // Helper function to recursively traverse parts
+  const traverseParts = (partsArray: any[]): string => {
+      for (const part of partsArray) {
+          if (part.mimeType === 'multipart/alternative' && part.parts) {
+              // If we find a 'multipart/alternative', we recursively check its nested parts
+              const nestedBody = traverseParts(part.parts);
+              if (nestedBody) return nestedBody; // If a valid body is found, return it
+          } else if (part.mimeType === 'text/html' && part.body?.data) {
+              // Prefer plain text if available
+              return cleanEmailContent(part.body.data);
+          } else if (part.mimeType === 'text/plain' && part.body?.data) {
+              // Fallback to HTML content if plain text is not found
+              emailBody = cleanEmailContent(part.body.data);
+          }
+      }
+      return emailBody;
+  };
+
+  // Start traversing from the top-level parts array
+  return traverseParts(parts);
+}
 
 
 export const getEmailByMessageId = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
-    const messageId = req.params.messageId; // Getting messageId from request parameters
+      const userId = req.userId;
+      const messageId = req.params.messageId;
 
-    if (!userId) {
-      res.status(400).json({ message: 'User ID is missing or invalid.' });
-      return;
-    }
+      if (!userId) {
+          res.status(400).json({ message: 'User ID is missing or invalid.' });
+          return;
+      }
 
-    if (!messageId) {
-      res.status(400).json({ message: 'Message ID is required.' });
-      return;
-    }
+      if (!messageId) {
+          res.status(400).json({ message: 'Message ID is required.' });
+          return;
+      }
 
-    const accessToken = await checkAndRefreshAccessToken(userId);
-    if (!accessToken) {
-      res.status(401).json({ message: 'Unauthorized, no access token provided.' });
-      return;
-    }
+      const accessToken = await checkAndRefreshAccessToken(userId);
+      if (!accessToken) {
+          res.status(401).json({ message: 'Unauthorized, no access token provided.' });
+          return;
+      }
 
-    const oauth2Client = new google.auth.OAuth2();
-    oauth2Client.setCredentials({ access_token: accessToken });
+      const oauth2Client = new google.auth.OAuth2();
+      oauth2Client.setCredentials({ access_token: accessToken });
 
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+      const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-    // Fetch the email by message ID
-    const email = await gmail.users.messages.get({
-      userId: 'me',  // or the user's email address
-      id: messageId, // Message ID from the request parameter
-    });
+      // Fetch the email by message ID
+      const email = await gmail.users.messages.get({
+          userId: 'me',
+          id: messageId,
+      });
 
-    const senderHeader = email.data.payload?.headers?.find((header) => header.name === 'From')?.value || '';
-    const senderEmail = extractEmailFromHeader(senderHeader);
-    const senderName = extractName(senderHeader);
-    const senderProfileImage = senderEmail ? await getGravatarUrl(senderEmail) : null;
+      const senderHeader = email.data.payload?.headers?.find((header) => header.name === 'From')?.value || '';
+      const senderEmail = extractEmailFromHeader(senderHeader);
+      const senderName = extractName(senderHeader);
+      const senderProfileImage = senderEmail ? await getGravatarUrl(senderEmail) : null;
+      const receivedDate = email.data.internalDate ? new Date(parseInt(email.data.internalDate)).toISOString() : null;
 
-    const receivedDate = email.data.internalDate ? new Date(parseInt(email.data.internalDate)).toISOString() : null;
+      // Mark the email as read by removing the "UNREAD" label
+      await gmail.users.messages.modify({
+          userId: 'me',
+          id: messageId,
+          requestBody: {
+              removeLabelIds: ['UNREAD'],
+          },
+      });
 
-    // Respond with the detailed message info
-    res.status(200).json({
-      message: 'Email fetched successfully',
-      email: {
-        id: email.data.id,
-        threadId: email.data.threadId,
-        subject: email.data.payload?.headers?.find((header) => header.name === 'Subject')?.value,
-        from: senderEmail,
-        senderName,
-        to: email.data.payload?.headers?.find((header) => header.name === 'To')?.value,
-        snippet: email.data.snippet,
-        senderProfileImage,
-        receivedDate,
-        rawPayload: email.data.payload, // Full raw email payload if needed
-      },
-    });
+      // Extract and decode the email body
+      const parts = email.data.payload?.parts || [];
+      const emailBody = extractEmailBody(parts);
+
+      // Respond with the cleaned email content
+      res.status(200).json({
+          message: 'Email fetched and marked as read successfully',
+          emailData: email,
+          email: {
+              id: email.data.id,
+              threadId: email.data.threadId,
+              subject: email.data.payload?.headers?.find((header) => header.name === 'Subject')?.value || '',
+              from: senderEmail,
+              senderName,
+              to: email.data.payload?.headers?.find((header) => header.name === 'To')?.value || '',
+              snippet: email.data.snippet,
+              senderProfileImage,
+              receivedDate,
+              body: emailBody || 'No content available', // Ensure body is a string
+          },
+      });
   } catch (error: any) {
-    console.error('Error fetching email by message ID:', error);
-    res.status(500).json({
-      message: 'Failed to fetch email',
-      error: error.message,
-    });
+      console.error('Error fetching email by message ID:', error);
+      res.status(500).json({
+          message: 'Failed to fetch email',
+          error: error.message,
+      });
   }
 };
-
-
 
 
 
@@ -463,16 +537,172 @@ export const sendEmailController = async (req: Request, res: Response) => {
 };
 
 // Delete email
-export const deleteEmail = async (req: Request, res: Response) => {
+
+
+export const deleteEmail = async (req: Request, res: Response) : Promise<void>  => {
   const { id } = req.params;
+
+  // Validate if 'id' parameter is provided
+  if (!id) {
+     res.status(400).json({ message: 'Email ID is required.' });
+     return
+  }
+
   try {
+    const userId = req.userId; // Assuming the userId is set via a middleware (e.g., auth middleware)
+
+    // Validate if userId exists
+    if (!userId) {
+       res.status(400).json({ message: 'User ID is missing or invalid.' });
+       return
+    }
+
+    // Get and validate the access token
+    const accessToken = await checkAndRefreshAccessToken(userId);
+    if (!accessToken) {
+       res.status(401).json({ message: 'Unauthorized, no access token provided.' });
+       return
+    }
+
+    console.log('Access Token:', accessToken); // Log the token to ensure it's valid
+
+    // Set up OAuth2 client with credentials
     const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: accessToken });
+
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-    await gmail.users.messages.delete({ userId: 'me', id });
-    res.status(200).send('Email deleted successfully');
-  } catch (err) {
-    res.status(500).send('Failed to delete email');
+
+    // Attempt to delete the email
+    await gmail.users.threads.trash({ userId: 'me', id });
+     res.status(200).json({
+      message: 'Email deleted successfully',
+    });
+    return
+    
+  } catch(err: any) {
+    // Log the full error for debugging
+    console.error('Error deleting email:', err);
+
+    // If error contains response data, handle Google API specific errors
+    if (err.response) {
+      console.error('Google API error:', err.response.data);
+       res.status(500).json({
+        message: 'Failed to delete email',
+        error: err.response.data.error,
+      });
+      return
+    }
+
+    // General error handling
+     res.status(500).json({
+      message: 'Failed to delete email',
+      error: err.message || err,
+    });
+    return
   }
 };
 
 
+const createReplyMessage = (
+  to: string,
+  fromName: string,
+  replyText: string,
+  subject: string,
+  threadId: string
+): string => {
+  const message = [
+    `From: "Me" <me@example.com>`, // Replace with your sender email
+    `To: ${to}`,
+    `Subject: Re: ${subject}`,
+    `In-Reply-To: <${threadId}>`,
+    `References: <${threadId}>`,
+    'Content-Type: text/plain; charset=UTF-8',
+    'MIME-Version: 1.0',
+    '',
+    replyText,
+  ].join('\n');
+
+  // Base64 encode the message
+  return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+
+
+export const replyToEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const messageId = req.params.messageId;
+    const { replyText } = req.body; // The text of the reply
+
+    if (!userId) {
+      res.status(400).json({ message: 'User ID is missing or invalid.' });
+      return;
+    }
+
+    if (!messageId) {
+      res.status(400).json({ message: 'Message ID is required.' });
+      return;
+    }
+
+    if (!replyText || replyText.trim() === '') {
+      res.status(400).json({ message: 'Reply text is required.' });
+      return;
+    }
+
+    const accessToken = await checkAndRefreshAccessToken(userId);
+    if (!accessToken) {
+      res.status(401).json({ message: 'Unauthorized, no access token provided.' });
+      return;
+    }
+
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: accessToken });
+
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    // Fetch the original email to get the thread ID and sender email
+    const email = await gmail.users.messages.get({
+      userId: 'me',
+      id: messageId,
+    });
+
+    const senderHeader = email.data.payload?.headers?.find((header) => header.name === 'From')?.value || '';
+    const senderEmail = extractEmailFromHeader(senderHeader);
+    const senderName = extractName(senderHeader);
+
+    if (!senderEmail) {
+      res.status(400).json({ message: 'Sender email not found.' });
+      return;
+    }
+
+    const threadId = email.data.threadId;
+
+    if (!threadId) {
+      res.status(400).json({ message: 'ThreadId not found.' });
+      return;
+    }
+    const subject = email.data.payload?.headers?.find((header) => header.name === 'Subject')?.value || '';
+
+    
+    // Create the reply message
+    const replyMessage = createReplyMessage(senderEmail, senderName, replyText, subject, threadId);
+
+    // Send the reply
+    const response = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: replyMessage,
+      },
+    });
+
+    res.status(200).json({
+      message: 'Reply sent successfully',
+      response,
+    });
+  } catch (error: any) {
+    console.error('Error replying to email:', error);
+    res.status(500).json({
+      message: 'Failed to send reply',
+      error: error.message,
+    });
+  }
+};

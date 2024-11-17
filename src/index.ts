@@ -5,8 +5,6 @@ import { shutdown } from "./services/shutdown";
 
 dotenv.config();
 
-
-
 const server = app.listen(process.env.PORT || 3000, () => {
   logger.info(`Server is running on port ${process.env.PORT || 3000}`);
 });
