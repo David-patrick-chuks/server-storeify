@@ -19,7 +19,7 @@ const seedUser = async () => {
   }
 
   
-  const hashedPassword = bcrypt.hashSync('5686qwerty', 10);
+  const hashedPassword = bcrypt.hashSync('12345678', 10);
   
   const newUser = new User({
     // username: '',
@@ -56,4 +56,4 @@ const email = 'pd3072894@gmail.com';
 const size = 200; // Optional size parameter
 const gravatarUrl = getGravatarUrl(email, size);
  
-console.log('Gravatar URL:', gravatarUrl);
+// console.log('Gravatar URL:', gravatarUrl);
