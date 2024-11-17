@@ -1,12 +1,12 @@
 import csrf from 'csurf';
 // const csrfProtection = csrf({ cookie: true });
 export const csrfProtection = csrf({
-  // cookie: true,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    sameSite: 'lax', // or 'strict', adjust based on your frontend-backend interaction
-  },
+  cookie: true,
+  // cookie: {
+  //   httpOnly: true,
+  //   secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+  //   sameSite: 'lax', // or 'strict', adjust based on your frontend-backend interaction
+  // },
   // cookie: {
   //   httpOnly: true, // Ensures the cookie is not accessible via JavaScript
   //   secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
