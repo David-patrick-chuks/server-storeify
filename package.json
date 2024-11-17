@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit",
     "seed": "npx ts-node src/seed/seedUser.ts",
     "ai": "npx ts-node src/controllers/aiEmailContent.ts",
+    "testai": "npx ts-node src/services/aiEmailFomater.ts",
     "san": "npx ts-node src/utils/sanitizer.ts"
   },
   "keywords": [],

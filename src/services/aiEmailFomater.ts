@@ -10,25 +10,20 @@ logger.info(gemini_api_key)
 
 
 const schema = {
-    description: "Email content generator for Storeify, specializing in web design, branding, and logo creation.",
+    description: "Email content formater to text/Html for Storeify, specializing in web design, branding, and logo creation.",
     type: SchemaType.OBJECT,
     properties: {
-        subject: {
-            type: SchemaType.STRING,
-            description: "A catchy and relevant subject line for the email.",
-            nullable: false,
-        },
         body: {
             type: SchemaType.STRING,
-            description: "The full content of the email, including greeting for all client [not one client], message, call to action, and closing.",
+            description: "Format the prompt [email body] to full text/html with stylying that is professional. this is our brand for [#481570]",
             nullable: false,
         }
     },
-    required: ["subject", "body"]
+    required: ["body"]
 };
 
 
-const systemInstruction = `You are an AI assistant named StoreifyBot. Your role is to generate professional and engaging email content for Storeify, a web tech company specializing in website creation, logo design, and branding services. also dont add the "[Client Name]" use a general words like ["hello amazing client"] just be professional, also our website url is www.storerify.vercal.app if needed `
+const systemInstruction = `You are an AI assistant named emailFormater. Your role is format the prompt email body give to you then style and send in json object format, this is our brand for [#481570]`
 const generationConfig = {
     temperature: 0.9,
     topK: 1,
@@ -59,20 +54,19 @@ const safetySettings = [
 ];
 
 
-export const emailContent = async (req: Request, res: Response): Promise<void> => {
+export const AiTextToHtmlFormater = async (prompt : string): Promise<void> => {
     try {
-        const { prompt } = req.body;
+        
 
         // Validate request body
         if (!prompt) {
-            res.status(400).json({ success: false, message: 'Prompt is required.' })
+            logger.info({ success: false, message: 'Prompt is required.' })
             return
         }
 
         // Check if API key is available
         if (!gemini_api_key) {
             logger.error('Invalid API key.');
-            res.status(500).json({ success: false, message: 'Internal Server Error.' })
             return
         }
 
@@ -91,30 +85,25 @@ export const emailContent = async (req: Request, res: Response): Promise<void> =
         // Check if response exists and restructure the output
         if (result && result.response) {
             const response = result.response.text();
-            const { body, subject } = JSON.parse(response)
+            const { body } = JSON.parse(response)
 
             // Constructing a clean response object
             const emailResponse = {
                 success: true,
-                subject,
                 body,
             };
 
-            logger.info('Generated Email Content:', emailResponse);
-
-            // Send the formatted response to the client
-            res.status(200).json(emailResponse)
-            return
+            // logger.info('Generated Email Content:', emailResponse);
+            return body;
         } else {
             logger.error('Failed to generate content from Gemini AI.');
-            res.status(500).json({ success: false, message: 'Failed to generate content.' })
             return
         }
     } catch (error) {
         // Handling unexpected errors and logging them
         logger.error('Error generating email content:', error);
-        res.status(500).json({ success: false, message: 'An unexpected error occurred.' })
         return
     }
 };
 
+const p = "Hello amazing client,\n\nWelcome to Storeify! We're thrilled to have you join our community of entrepreneurs and businesses looking to make their mark online. Get ready to embark on a journey of creating a stunning online presence that truly represents your brand.\n\nWhether you need a website that captivates your audience, a logo that speaks volumes, or a complete branding overhaul, our team of expert designers and developers is here to help every step of the way. Explore our services and discover how we can help you achieve your business goals.\n\nTo get started, you can:\n\n* Visit our website at [website address] to browse our services\n* Check out our portfolio at [portfolio address] for inspiration\n* Contact us directly at [contact information] for customized support \n\nWe're confident that together, we can build something amazing.  Let's get started!\n\nSincerely,\nThe Storeify Team"
