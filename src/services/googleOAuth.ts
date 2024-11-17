@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 const oauth2Client = new google.auth.OAuth2(
   "1072182978229-uucstd3nc542b39dncd0tasvgn8hkp3u.apps.googleusercontent.com",
   "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",
-  "http://localhost:5555/api/v1/auth/google/oauth2callback"
+  "https://server-storeify.onrender.com/api/v1/auth/google/oauth2callback"
 );
 
 export const refreshAccessToken = async (refreshToken: string): Promise<string> => {
@@ -35,7 +35,7 @@ export const getAuthUrl = async () => {
     const googleAuthUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES,
-      redirect_uri: process.env.REDIRECT_URI || "http://localhost:5555/api/v1/auth/google/oauth2callback", // Use environment variable for flexibility
+      redirect_uri: process.env.REDIRECT_URI || "https://server-storeify.onrender.com/api/v1/auth/google/oauth2callback", // Use environment variable for flexibility
       prompt: 'consent' // Forces the user to re-consent
     });
 

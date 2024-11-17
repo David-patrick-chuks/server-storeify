@@ -1,6 +1,6 @@
 // CORS configuration
 export const corsOptions = {
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173", 
+    origin: process.env.CORS_ORIGIN || "https://storeify-management.vercel.app", 
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "CSRF-Token", "Authorization"],
     // exposedHeaders: ["CSRF-Token"], // Expose CSRF-Token header to the client
