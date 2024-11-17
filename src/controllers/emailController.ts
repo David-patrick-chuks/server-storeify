@@ -225,6 +225,7 @@ export const getEmailsTotal = async (req: Request, res: Response): Promise<void>
 
 
 
+
 export const sendBulkEmailController = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
@@ -257,7 +258,8 @@ export const sendBulkEmailController = async (req: Request, res: Response): Prom
     const profile = await gmail.users.getProfile({
       userId: 'me', // Fetch the authenticated user's profile
     });
-    const emailBodyHtml = await AiTextToHtmlFormater(messageBody)
+
+    const emailBodyHtml = await AiTextToHtmlFormater(messageBody);
     const { emailAddress } = profile.data;
 
     if (!recipients || recipients.length === 0) {
@@ -265,40 +267,38 @@ export const sendBulkEmailController = async (req: Request, res: Response): Prom
       return;
     }
 
-    const emailSendingPromises = recipients.map(async (recipient: any) => {
-      const emailLines = [
-        `From: ${emailAddress}`,
-        `To: ${recipient}`,
-        'Content-type: text/html; charset=UTF-8',
-        'MIME-Version: 1.0',
-        `Subject: ${subject}`,
-        '',
-        emailBodyHtml,
-        ''
-      ];
+    // Join the recipients array into a single string with commas separating emails
+    const recipientsString = recipients.join(', ');
 
-      const email = emailLines.join('\r\n').trim();
-      const base64Email = Buffer.from(email).toString('base64');
+    const emailLines = [
+      `From: ${emailAddress}`,
+      `To: ${recipientsString}`,  // All recipients in one line
+      'Content-type: text/html; charset=UTF-8',
+      'MIME-Version: 1.0',
+      `Subject: ${subject}`,
+      '',
+      emailBodyHtml,
+      ''
+    ];
 
-      try {
-        console.log(`Sending email to ${recipient}`);
-        await gmail.users.messages.send({
-          userId: 'me',
-          requestBody: {
-            raw: base64Email,
-          },
-        });
-        console.log(`Email sent to ${recipient}`);
-      } catch (error) {
-        console.error(`Error sending email to ${recipient}:`, error);
-        throw new Error(`Error sending email to ${recipient}`);
-      }
-    });
+    const email = emailLines.join('\r\n').trim();
+    const base64Email = Buffer.from(email).toString('base64');
 
-    // Wait for all email sending tasks to complete
-    await Promise.all(emailSendingPromises);
+    try {
+      console.log(`Sending email to ${recipientsString}`);
+      await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw: base64Email,
+        },
+      });
+      console.log(`Email sent to ${recipientsString}`);
+    } catch (error) {
+      console.error(`Error sending email:`, error);
+      throw new Error(`Error sending email`);
+    }
 
-    // After all emails are sent, respond
+    // Respond after the email is sent
     res.status(200).json({ message: 'Bulk emails sent successfully' });
   } catch (error: any) {
     console.error('Error sending bulk emails:', error);
@@ -313,91 +313,6 @@ export const sendBulkEmailController = async (req: Request, res: Response): Prom
 
 
 
-
-
-
-
-
-
-
-
-// export const getAllEmails = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const { accessToken } = req.user || {}; // Access token exists after authentication
-
-//     if (!accessToken) {
-//       res.status(401).json({ message: 'Unauthorized, no access token provided.' });
-//       return;
-//     }
-
-//     const limit = parseInt(req.query.limit as string, 10) || 10;
-//     const page = parseInt(req.query.page as string, 10) || 1;
-
-//     const oauth2Client = getGmailClient(accessToken);
-
-//     // Get the total count of all messages in the user's Gmail (without query filter)
-//     const totalResponse = await gmail.users.messages.list({
-//       userId: 'me',
-//       auth: oauth2Client,
-//       maxResults: 500,
-//       pageToken: req.query.pageToken as string || undefined
-//     });
-
-//     const totalEmails = totalResponse.data.resultSizeEstimate || 0;
-
-//     // Calculate pagination
-//     const maxResults = limit;
-//     const startIndex = (page - 1) * maxResults;
-
-//     // Fetch paginated unread email messages
-//     const response = await gmail.users.messages.list({
-//       userId: 'me',
-//       auth: oauth2Client,
-//       q: 'is:unread', // Modify as needed
-//       maxResults,
-//       pageToken: req.query.pageToken as string || undefined,
-//     });
-
-//     const messages = response.data.messages || [];
-//     const nextPageToken = response.data.nextPageToken || null;
-
-//     // Fetch full message details for each email ID returned
-//     const emailPromises = messages.map(async (message) => {
-//       const email = await gmail.users.messages.get({
-//         userId: 'me',
-//         id: message.id!,
-//         auth: oauth2Client,
-//       });
-
-//       return email.data;
-//     });
-
-//     // Resolve all email details
-//     const emailDetails = await Promise.all(emailPromises);
-
-//     res.status(200).json({
-//       message: 'Emails fetched successfully',
-//       totalEmails,
-//       emails: emailDetails,
-//       pagination: {
-//         currentPage: page,
-//         limit,
-//         nextPageToken,
-//       },
-//     });
-//   } catch (error: Error | any) {
-//     console.error('Error fetching emails:', error);
-//     res.status(500).json({
-//       message: 'Failed to fetch emails',
-//       error: error.message,
-//     });
-//   }
-// };
-
-
-
-
-// Send email
 
 
 

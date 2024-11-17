@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const gemini_api_key = process.env.API_KEY;
-logger.info(gemini_api_key)
+// logger.info(gemini_api_key)
 
 
 

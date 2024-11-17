@@ -12,6 +12,7 @@ import { limiter } from "./middleware/limiter";
 import authRoutes from './routes/auth';
 import emailRoutes from './routes/emails';
 import userRoutes from './routes/userRoutes';
+import notifyRoute from './routes/notifyRoute';
 import AiAgent from './routes/AiAgent';
 import projectRoutes from './routes/projectRoutes';
 import { healthcareService } from "./services/HealthCheckController";
@@ -20,7 +21,7 @@ import { catchAll404Request } from "./utils/catchAll404Request";
 import { globalError } from "./utils/globalErrorHandler";
 import { csrfProtection } from "./config/csrf";
 // import xss from 'express-xss-sanitizer'
-
+import "./cron/cronJobs"
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ app.use('/api/v1/email',csrfProtection,  emailRoutes);
 app.use('/api/v1/user',csrfProtection,  userRoutes);
 app.use('/api/v1/projects',csrfProtection,  projectRoutes);
 app.use('/api/v1/ai',csrfProtection, AiAgent);
+app.use('/api/v1/bell',csrfProtection, notifyRoute);
 
 
 // generate csrf token for any req expect GET
