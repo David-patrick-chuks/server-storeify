@@ -54,16 +54,28 @@ app.use(MorganSetup);
 app.use("/api/v1/", limiter);
 
 // Route definitions
-app.use('/api/v1/auth', csrfProtection, authRoutes);
-app.use('/api/v1/email',csrfProtection,  emailRoutes);
-app.use('/api/v1/user',csrfProtection,  userRoutes);
-app.use('/api/v1/projects',csrfProtection,  projectRoutes);
-app.use('/api/v1/ai',csrfProtection, AiAgent);
-app.use('/api/v1/bell',csrfProtection, notifyRoute);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/email',  emailRoutes);
+app.use('/api/v1/user',  userRoutes);
+app.use('/api/v1/projects',  projectRoutes);
+app.use('/api/v1/ai', AiAgent);
+app.use('/api/v1/bell', notifyRoute);
 
 
 // generate csrf token for any req expect GET
-app.get('/api/v1/csrf-token',csrfProtection,csrfTokenGen);
+app.get('/api/v1/csrf-token',csrfTokenGen);
+
+// // Route definitions
+// app.use('/api/v1/auth', csrfProtection, authRoutes);
+// app.use('/api/v1/email',csrfProtection,  emailRoutes);
+// app.use('/api/v1/user',csrfProtection,  userRoutes);
+// app.use('/api/v1/projects',csrfProtection,  projectRoutes);
+// app.use('/api/v1/ai',csrfProtection, AiAgent);
+// app.use('/api/v1/bell',csrfProtection, notifyRoute);
+
+
+// // generate csrf token for any req expect GET
+// app.get('/api/v1/csrf-token',csrfProtection,csrfTokenGen);
 
 // Health check route
 app.get("/health", healthcareService);
