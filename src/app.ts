@@ -1,8 +1,8 @@
-import timeout from "connect-timeout"; 
+
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import helmet from "helmet"; 
 import { corsOptions } from "./config/cors";
 import { connectDB } from "./config/db";
@@ -20,7 +20,6 @@ import { csrfTokenGen } from "./services/csrfTokenGen";
 import { catchAll404Request } from "./utils/catchAll404Request";
 import { globalError } from "./utils/globalErrorHandler";
 import { csrfProtection } from "./config/csrf";
-// import xss from 'express-xss-sanitizer'
 import "./cron/cronJobs"
 
 dotenv.config();
@@ -41,8 +40,6 @@ app.use(express.urlencoded({ extended: true, limit:'1kb' }));
 app.use(cookieParser());
 /// req sanitizer
 // app.use(xss());
-// Request timeout middleware (2-minute timeout)
-app.use(timeout("2m"));
 
 // Setup Morgan to log requests and
 // Stream Morgan logs to Winston
