@@ -63,7 +63,7 @@ app.use('/api/v1/bell', notifyRoute);
 
 
 // generate csrf token for any req expect GET
-app.get('/api/v1/csrf-token',csrfTokenGen);
+// app.get('/api/v1/csrf-token',csrfTokenGen);
 
 // // Route definitions
 // app.use('/api/v1/auth', csrfProtection, authRoutes);
