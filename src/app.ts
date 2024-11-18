@@ -38,15 +38,12 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit:'1kb' }));
 app.use(cookieParser());
-/// req sanitizer
-// app.use(xss());
 
-// Setup Morgan to log requests and
 // Stream Morgan logs to Winston
 app.use(MorganSetup);
 
 
-    
+
 //Main Route path with limiting middleware =====//
 app.use("/api/v1/", limiter);
 
