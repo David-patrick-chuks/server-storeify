@@ -24,7 +24,7 @@ import "./cron/cronJobs"
 
 dotenv.config();
 
-const app: Application = express();
+const app = express();
 
 // Connect to the database
 connectDB();
