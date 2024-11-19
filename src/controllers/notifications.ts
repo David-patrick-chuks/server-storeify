@@ -3,7 +3,6 @@ import { Request, Response, } from 'express';
 import Notification from '../models/Notification';
 import User from '../models/User';
 import logger from '../config/logger';
-import { Types } from 'mongoose';
 
 
 export const notify = async (req: Request, res: Response): Promise<void> => {
