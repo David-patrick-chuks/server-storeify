@@ -170,7 +170,7 @@ export const sendEmail = async (to, subject, body) => {
 const getTokensFromDB = async (userId) => {
   try {
     // Query the database for the user by googleId (userId passed as parameter)
-    const user = await User.findOne({ googleId: userId }).select('googleTokens refreshToken tokenExpiryDate');
+    const user = await User.findOne({ email: userId }).select('googleTokens refreshToken tokenExpiryDate');
 
     if (!user) {
       throw new Error('User not found');
@@ -194,7 +194,7 @@ const updateTokensInDB = async (userId, newAccessToken, newRefreshToken, newExpi
   try {
     // Find the user by googleId (userId) and update their tokens and expiry date
     const updatedUser = await User.findOneAndUpdate(
-      { googleId: userId }, // Query to find the user by googleId
+      { email: userId }, // Query to find the user by googleId
       {
         googleTokens: newAccessToken, // Update access token
         refreshToken: newRefreshToken, // Update refresh token

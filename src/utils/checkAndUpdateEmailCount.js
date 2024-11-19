@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 
-export const checkAndUpdateEmailCount = async (googleId) => {
-    const user = await User.findOne({ googleId: googleId })
+export const checkAndUpdateEmailCount = async (email) => {
+    const user = await User.findOne({ email: email })
   if (!user) {
     throw new Error('User not found');
   }

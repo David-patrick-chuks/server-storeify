@@ -16,7 +16,7 @@ export const getUserProfile = async (req, res)  => {
     }
     logger.info(`User ID: ${userId}`);
 
-    const user = await User.findOne({ googleId: userId }).select('-googleTokens -refreshToken -password -createdAt -updatedAt -googleId'); // Exclude sensitive tokens
+    const user = await User.findOne({ email: userId }).select('-googleTokens -refreshToken -password -createdAt -updatedAt -googleId'); // Exclude sensitive tokens
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;

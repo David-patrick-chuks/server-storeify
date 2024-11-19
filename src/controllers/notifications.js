@@ -5,11 +5,11 @@ import User from '../models/User.js';
 
 
 export const notify = async (req, res)  => {
-    const googleId = req.userId;
+    const email = req.userId;
 
 
     try {
-        const user = await User.findOne({ googleId });
+        const user = await User.findOne({ email });
         if (!user) {
             logger.error('Admin email not found.');
             return

@@ -65,20 +65,12 @@ export const login = async (req, res) => {
     }
 
     const jwtToken = createJWT(user.email);
-    
-    res.cookie("jwt", jwtToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure cookies in production
-      sameSite: "strict", // Strict SameSite policy for cookies
-      maxAge: 2 * 60 * 1000, // 2 minutes for the cookie's expiration
-    });
-
-    logger.info("User logged in successfully because they have the Google ID");
     res.status(200).json({
       message: "Logged in successfully, Google Id exist",
       success: true,
       jwtToken: jwtToken,
     });
+    logger.info("User logged in successfully because they have the Google ID");
 
     return;
   } catch (error) {
@@ -175,14 +167,13 @@ export const redirectToGoogleLogin = async (req, res) => {
 // Logout function
 // Logout function
 export const logout = (req, res) => {
-  // Clear the cookie by using the same options as during setting the cookie
-  res.clearCookie("jwt", {
-    httpOnly: true, // Ensure it was set with httpOnly
-    secure: process.env.NODE_ENV === "production", // Make sure it's the same secure flag
-    sameSite: "strict", // Same site settings should match what was used when setting the cookie
+  // If you're storing the JWT in localStorage or sessionStorage, just send a message to clear it
+  res.status(200).json({ 
+    message: "Logged out successfully" 
   });
 
-  res.status(200).json({ message: "Logged out successfully" });
+  // Optionally, you can log out on the server side, but since we're not using cookies,
+  // there's no session or cookie to clear server-side.
 };
 
 export const forgotPassword = async (req, res) => {
