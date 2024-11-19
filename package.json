@@ -4,7 +4,7 @@
   "type": "module",
   "main": "dist/index.js",
 "scripts": {
-    "start": "node dist/index.js",
+    "start": "node src/index.js",
     "dev": "nodemon src/index.js", 
     "seed": "node src/seed/seedUser.js",
     "ai": "node src/controllers/aiEmailContent.js", 
