@@ -15,7 +15,8 @@ export const authenticateJWT = (req, res, next) => {
   // Verify the JWT token
   jwt.verify(token, process.env.JWT_SECRET || "", async (err, decoded) => {
     if (err) {
-      return res.status(401).json({ message: "Unauthorized access" });
+      logger.error("Error verifying JWT:", err);
+      return res.status(401).json({ message: "Unauthorized access" , err});
     }
 
     // Attach the decoded user data to the request object

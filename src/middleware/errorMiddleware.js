@@ -16,6 +16,7 @@ const errorMiddleware = (err, req, res, _next) => {
 
     // Handle other known errors here
     if (err.message && err.message.includes("Unauthorized")) {
+      logger.error("Unauthorized access", err.message);
       res.status(401).json({ message: "Unauthorized access." });
       return;
     }
