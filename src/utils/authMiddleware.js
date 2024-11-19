@@ -49,7 +49,6 @@ export const authenticateJWT = (req, res, next) => {
         if (!refreshToken) {
           return res.status(401).json({ message: 'Token expired and no refresh token provided.' });
         }
-
         // Attempt to refresh the access token using the refresh token
         try {
           if (!decoded) {
