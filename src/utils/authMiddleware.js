@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import logger from "../config/logger.js";
 
 // Middleware to check if the user is authorized based on JWT
 export const authenticateJWT = (req, res, next) => {
