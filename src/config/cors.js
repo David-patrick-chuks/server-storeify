@@ -2,7 +2,7 @@
 export const corsOptions = {
     origin: process.env.CORS_ORIGIN || "https://storeify-management.vercel.app", 
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "CSRF-Token", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     
     credentials: true,
     preflightContinue: false,
