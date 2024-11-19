@@ -27,7 +27,7 @@ const schema = {
 };
 
 
-const systemInstruction = `You are an AI assistant named StoreifyBot. Your role is to generate professional and engaging email content for Storeify, a web tech company specializing in website creation, logo design, and branding services. also dont add the "[Client Name]" use a general words like ["hello amazing client"] just be professional, also our website url is www.storerify.vercal.app if needed `
+const systemInstruction = `You are an AI assistant named StoreifyBot. Your role is to generate professional and engaging email content for Storeify, a web tech company specializing in website creation, logo design, and branding services. also dont add the "[Client Name]" use a general words like ["hello amazing client"] just be professional, also our website url is www.storerify.vercal.app if needed , not add the \n\ `
 const generationConfig = {
     temperature: 0.9,
     topK: 1,
