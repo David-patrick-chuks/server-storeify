@@ -129,9 +129,27 @@ export const storeTokens = async (profile, tokens) => {
 
 // Function to create JWT token
 // Create JWT including accessToken
+// export const createJWT = (googleId, accessToken) => {
+//   return jwt.sign({ googleId, accessToken }, process.env.JWT_SECRET || 'R3@lM3G@N0!_S3cure&Pa$$w0rd20244SWEET', { expiresIn: '15d' });
+// };
+;
+
 export const createJWT = (googleId, accessToken) => {
-  return jwt.sign({ googleId, accessToken }, process.env.JWT_SECRET || '', { expiresIn: '15d' });
+  // Ensure you set JWT_SECRET in your environment variables for production
+  if (!process.env.JWT_SECRET) {
+    console.warn("Warning: Using fallback secret key. Set process.env.JWT_SECRET for production.");
+  }
+
+  return jwt.sign(
+    { googleId, accessToken }, // Payload: consider storing minimal sensitive data
+    process.env.JWT_SECRET || 'fallbackSecretKey-R3@lM3G@N0!_S3cure&Pa$$w0rd20244SWEET', // Secret key (use env var in production)
+    {
+      algorithm: 'HS256', // Explicitly define the algorithm
+      expiresIn: '15d', // Token expiration time
+    }
+  );
 };
+
 // Function to send email using Google API
 export const sendEmail = async (to, subject, body) => {
   const gmail = google.gmail({ version: 'v1', auth: oauth2Client });

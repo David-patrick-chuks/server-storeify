@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
-"scripts": {
+  "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js", 
+    "dev": "nodemon src/index.js",
     "seed": "node src/seed/seedUser.js",
-    "ai": "node src/controllers/aiEmailContent.js", 
+    "ai": "node src/controllers/aiEmailContent.js",
     "testai": "node src/services/aiEmailFomater.js",
-    "san": "node src/utils/sanitizer.js" 
-},
+    "san": "node src/utils/sanitizer.js"
+  },
   "keywords": [],
   "author": "David Patrick",
   "license": "ISC",
@@ -41,5 +41,4 @@
   "devDependencies": {
     "nodemon": "^3.1.7"
   }
-
 }
