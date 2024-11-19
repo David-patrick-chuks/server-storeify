@@ -1,4 +1,3 @@
-import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -30,16 +29,15 @@ app.set("trust proxy", true);
 
 // Connect to the database
 connectDB();
-app.use(cookieParser());
 // csrf protection for any req expect GET
 // app.use(csrfProtection);
 
 // Middleware setup
+app.use(cookieParser());
 app.use(helmet()); // Security headers
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "1kb" }));
-app.use(cookieParser());
 
 // Stream Morgan logs to Winston
 app.use(MorganSetup);
