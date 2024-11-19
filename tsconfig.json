@@ -109,7 +109,7 @@
   },
   "include": [
     "src",
-    "src/types/custom.ts"
+    "./src/types/custom.ts"
   ],
   "exclude": [
     "node_modules"
