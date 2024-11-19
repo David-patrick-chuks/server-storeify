@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 import logger from "../config/logger.js";
+import User from "../models/User.js";
 
 // Middleware to check if the user is authorized based on JWT
 export const authenticateJWT = (req, res, next) => {
@@ -55,7 +55,7 @@ export const isAuthorized = async (req, res, next) => {
     }
 
     // Check if the user email matches the allowed email (e.g., Chutek@gmail.com)
-    if (user.email !== "pd3072894@gmail.com") {
+    if (user.email !== "majidadams200@gmail.com") {
       return res
         .status(403)
         .json({ message: "Access denied. Unauthorized email." });
