@@ -30,10 +30,10 @@ export const isAuthorized = async (req, res, next) => {
 };
 
 
-// Middleware to authenticate JWT
+
 export const authenticateJWT = (req, res, next) => {
-  // Check for token in the Authorization header (Bearer token)
-  const token = req.headers['authorization']?.split(' ')[1] || req.cookies.jwt;
+  // Extract the JWT token from the cookies
+  const token = req.cookies.jwt;
 
   if (!token) {
     return res.status(401).json({ message: 'No token provided. Unauthorized access.' });
@@ -52,7 +52,7 @@ export const authenticateJWT = (req, res, next) => {
     } else {
       return res.status(401).json({ message: 'Invalid token structure' });
     }
-    
+
     // Continue to the next middleware
     next();
   });

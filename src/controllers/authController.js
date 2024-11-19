@@ -58,10 +58,10 @@ export const login = async (req, res) => {
         sameSite: "strict", // Strict SameSite policy for cookies
         maxAge: 2 * 60 * 1000, // 2 minutes for the cookie's expiration
       });
-      res.status(200).json({
-        success: true,
-        jwtToken: jwtToken,
-      });
+      // res.status(200).json({
+      //   success: true,
+      //   jwtToken: jwtToken,
+      // });
 
       logger.info("User logged in successfully with Google ID");
       res.status(200).json({ message: "Logged in successfully" });
@@ -161,11 +161,11 @@ export const oauth2Callback = async (req, res) => {
     });
 
     // Send the JWT token in the response body as well
-    res.status(200).json({
-      success: true,
-      message: "Authentication successful",
-      jwtToken: jwtToken,
-    });
+    // res.status(200).json({
+    //   success: true,
+    //   message: "Authentication successful",
+    //   jwtToken: jwtToken,
+    // });
 
     logger.info("Authentication successful, redirecting to profile");
     res.redirect(`${process.env.CLIENT_BASE_URL}/dashboard`);
