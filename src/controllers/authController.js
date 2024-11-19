@@ -52,6 +52,7 @@ export const login = async (req, res) => {
       // Send the token directly to the client as a JSON response
       logger.info("No Google ID found, using static login credentials");
       res.status(200).json({
+        message: "No Google ID found, using static login credentials",
         success: true,
         jwtToken: jwtToken,
       });
