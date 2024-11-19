@@ -7,5 +7,4 @@ declare module 'node'
 declare module 'csurf';
 declare module 'morgan';
 declare module 'bcryptjs';
-declare module 'jsonwebtoken';
 
