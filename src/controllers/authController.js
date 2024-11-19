@@ -46,31 +46,24 @@ export const login = async (req, res) => {
       return;
     }
 
+    const jwtToken = createJWT(user.email);
     // Check if user has a Google ID
     if (!user.googleId && !user.googleTokens) {
-      const jwtToken = createJWT(user.email);
       // Send the token directly to the client as a JSON response
-      res.status(200).json({
-        success: true,
-        jwtToken: jwtToken,
-      });
-
       logger.info("No Google ID found, using static login credentials");
       res.status(200).json({
-        message: "No Google ID found, using static login credentials",
         success: true,
         jwtToken: jwtToken,
       });
       return;
     }
 
-    const jwtToken = createJWT(user.email);
+    logger.info("User logged in successfully because they have the Google ID");
     res.status(200).json({
       message: "Logged in successfully, Google Id exist",
       success: true,
       jwtToken: jwtToken,
     });
-    logger.info("User logged in successfully because they have the Google ID");
 
     return;
   } catch (error) {
