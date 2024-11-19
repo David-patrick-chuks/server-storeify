@@ -228,7 +228,7 @@ export const sendBulkEmailController = async (req, res)  => {
     const userId = req.userId;
     const googleId = req.userId;
 
-    if (!userId || !googleId) {
+    if (!userId) {
       res.status(400).json({ message: 'User ID or Google ID is missing or invalid.' });
       return;
     }

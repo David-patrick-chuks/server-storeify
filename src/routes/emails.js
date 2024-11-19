@@ -13,7 +13,7 @@ router.post('/reply/:messageId', authenticateJWT, replyToEmail);
 router.get('/emails', authenticateJWT, getEmailsWithPagination);
 router.get('/emails/:messageId', authenticateJWT, getEmailByMessageId);
 router.post('/send', authenticateJWT, isAuthorized, sendEmailController);
-router.post('/send-bulk', authenticateJWT, isAuthorized, sendBulkEmailController); // New route for bulk emails
-router.delete('/delete/:id', authenticateJWT, isAuthorized, deleteEmail);
+router.post('/send-bulk', authenticateJWT, sendBulkEmailController); // New route for bulk emails
+router.delete('/delete/:id', authenticateJWT, deleteEmail);
 
 export default router;
