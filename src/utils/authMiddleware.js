@@ -73,7 +73,6 @@ export const authenticateJWT = (req, res, next) => {
             maxAge: 30 * 60 * 1000, // Set the expiration time for the access token (30 minutes)
           });
 
-          // Retry the request with the new token
           return next();
         } catch (refreshError) {
           return res.status(401).json({ message: 'Failed to refresh token' });
@@ -89,7 +88,6 @@ export const authenticateJWT = (req, res, next) => {
     } else {
       return res.status(401).json({ message: 'Invalid token structure' });
     }
-
     // Continue to the next middleware
     next();
   });
