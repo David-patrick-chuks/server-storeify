@@ -60,7 +60,7 @@ export const getTokens = async (code) => {
     oauth2Client.setCredentials(tokens);
 
     // Fetch the user's profile information
-    const { data: profileData } = await oauth2Client.request<GoogleProfile>({
+    const { data: profileData } = await oauth2Client.request({
       url: 'https://www.googleapis.com/oauth2/v2/userinfo',
       headers: {
         Authorization: `Bearer ${tokens.access_token}`,
@@ -79,10 +79,11 @@ export const getTokens = async (code) => {
       profile: profileData,
     };
   } catch (error) {
-    console.error('Error fetching tokens or profile:', error);
+    console.error('Error fetching tokens or profile:', error.message || error);
     throw new Error('Failed to retrieve Google OAuth tokens or profile');
   }
 };
+
 
 
 
