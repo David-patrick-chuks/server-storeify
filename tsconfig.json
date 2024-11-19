@@ -24,7 +24,7 @@
     /* Modules */
     
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    // "moduleResolution": "node",
     "resolveJsonModule": true,
     "module": "commonjs", /* Specify what module code is generated. */
     "rootDir": "./src", /* Specify the root folder within your source files. */
@@ -37,7 +37,7 @@
       "./src/types/custom.ts"
     ], /* Specify multiple folders that act like './node_modules/@types'. */
     "types": [
-      "node"
+      
     ], /* Specify type package names to be included without being referenced in a source file. */
     // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
     // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
