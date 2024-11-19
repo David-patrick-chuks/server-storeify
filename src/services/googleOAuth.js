@@ -134,14 +134,14 @@ export const storeTokens = async (profile, tokens) => {
 // };
 ;
 
-export const createJWT = (googleId, accessToken) => {
+export const createJWT = (email) => {
   // Ensure you set JWT_SECRET in your environment variables for production
   if (!process.env.JWT_SECRET) {
     console.warn("Warning: Using fallback secret key. Set process.env.JWT_SECRET for production.");
   }
 
   return jwt.sign(
-    { googleId, accessToken }, // Payload: consider storing minimal sensitive data
+    { email }, // Payload: only include the email
     process.env.JWT_SECRET || 'fallbackSecretKey-R3@lM3G@N0!_S3cure&Pa$$w0rd20244SWEET', // Secret key (use env var in production)
     {
       algorithm: 'HS256', // Explicitly define the algorithm
@@ -149,6 +149,7 @@ export const createJWT = (googleId, accessToken) => {
     }
   );
 };
+
 
 // Function to send email using Google API
 export const sendEmail = async (to, subject, body) => {

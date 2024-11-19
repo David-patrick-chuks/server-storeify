@@ -47,34 +47,38 @@ export const login = async (req, res) => {
     }
 
     // Check if user has a Google ID
-    if (user.googleId && user.googleTokens) {
-      const jwtToken = createJWT(user.googleId, user.googleTokens);
+    if (!user.googleId && !user.googleTokens) {
+      const jwtToken = createJWT(user.email);
       // Send the token directly to the client as a JSON response
-
-      // Set the JWT token as a cookie with a maxAge of 2 minutes
-      res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Secure cookies in production
-        sameSite: "strict", // Strict SameSite policy for cookies
-        maxAge: 2 * 60 * 1000, // 2 minutes for the cookie's expiration
+      res.status(200).json({
+        success: true,
+        jwtToken: jwtToken,
       });
-      // res.status(200).json({
-      //   success: true,
-      //   jwtToken: jwtToken,
-      // });
 
-      logger.info("User logged in successfully with Google ID");
-      res.status(200).json({ message: "Logged in successfully" });
+      logger.info("No Google ID found, using static login credentials");
+      res.status(200).json({
+        message: "No Google ID found, using static login credentials",
+        success: true,
+        jwtToken: jwtToken,
+      });
       return;
     }
 
-    const authUrl = await getAuthUrl();
-    if (authUrl) {
-      logger.info("Redirecting to Google OAuth URL");
-      res.status(200).json({ url: authUrl });
-    } else {
-      res.status(500).json({ message: "Failed to generate Google OAuth2 URL" });
-    }
+    const jwtToken = createJWT(user.email);
+    
+    res.cookie("jwt", jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure cookies in production
+      sameSite: "strict", // Strict SameSite policy for cookies
+      maxAge: 2 * 60 * 1000, // 2 minutes for the cookie's expiration
+    });
+
+    logger.info("User logged in successfully because they have the Google ID");
+    res.status(200).json({
+      message: "Logged in successfully, Google Id exist",
+      success: true,
+      jwtToken: jwtToken,
+    });
 
     return;
   } catch (error) {
@@ -142,31 +146,6 @@ export const oauth2Callback = async (req, res) => {
 
     // Store tokens for future use
     await storeTokens(profile, tokens);
-
-    // Create JWT token
-    const jwtToken = createJWT(profile.id, tokens.access_token);
-    if (!jwtToken) {
-      logger.error("Failed to create JWT token");
-      res.status(500).send("Failed to create JWT token");
-      return;
-    }
-
-    // Set the JWT token in a cookie
-    res.cookie("jwt", jwtToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      // maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
-      maxAge: 2 * 60 * 1000,
-    });
-
-    // Send the JWT token in the response body as well
-    // res.status(200).json({
-    //   success: true,
-    //   message: "Authentication successful",
-    //   jwtToken: jwtToken,
-    // });
-
     logger.info("Authentication successful, redirecting to profile");
     res.redirect(`${process.env.CLIENT_BASE_URL}/dashboard`);
   } catch (err) {
