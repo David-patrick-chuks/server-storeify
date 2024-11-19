@@ -4,7 +4,7 @@ import { emailContent } from '../controllers/aiEmailContent.js';
 
 const router = express.Router();
 
-router.post("/generate",authenticateJWT,isAuthorized ,emailContent )
+router.post("/generate" ,emailContent )
 
 
 export default router;

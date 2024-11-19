@@ -5,18 +5,18 @@ import { authenticateJWT } from '../utils/authMiddleware.js';
 const router = Router();
 
 // Route to get user profile
-router.get('/profile', authenticateJWT, getUserProfile);
+router.get('/profile', getUserProfile);
 
-router.put('/email-notify', authenticateJWT, updateIsNotify);
+router.put('/email-notify', updateIsNotify);
 
-router.put('/update-password', authenticateJWT, updatePassword);
+router.put('/update-password', updatePassword);
 
 
 // Route to update user profilep
 // router.put('/profile', authenticateJWT, updateUserProfile);
 
 
-router.get('/check-auth', authenticateJWT, checkAuthentication);
+router.get('/check-auth', checkAuthentication);
 
 
 export default router;
