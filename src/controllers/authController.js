@@ -31,12 +31,12 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    logger.info("User logging in: real email", email);
+    // logger.info("User logging in: real email", email);
     const userEmail = email.toLowerCase();
-    logger.info("User logging in:", userEmail);
+    // logger.info("User logging in:", userEmail);
     // Find the user by email in the MongoDB database
-    const user = await User.findOne({ userEmail });
-    logger.info("User found in database:", user);
+    const user = await User.findOne({ email : userEmail });
+    // logger.info("User found in database:", user);
 
     if (!user) {
       res.status(401).json({ message: "User not found" });
