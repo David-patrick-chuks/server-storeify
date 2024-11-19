@@ -23,6 +23,7 @@
     // "moduleDetection": "auto",                        /* Control what method is used to detect module-format JS files. */
     /* Modules */
     
+    "skipLibCheck": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "module": "commonjs", /* Specify what module code is generated. */
@@ -33,11 +34,11 @@
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     "typeRoots": [
       "./node_modules/@types",
-      "./src/types/custom.ts"
+      "src/types/custom.ts"
     ], /* Specify multiple folders that act like './node_modules/@types'. */
-    "types": [
-      "node"
-    ], /* Specify type package names to be included without being referenced in a source file. */
+    // "types": [
+    //   "node"
+    // ], /* Specify type package names to be included without being referenced in a source file. */
     // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
     // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
     // "allowImportingTsExtensions": true,               /* Allow imports to include TypeScript file extensions. Requires '--moduleResolution bundler' and either '--noEmit' or '--emitDeclarationOnly' to be set. */
@@ -104,8 +105,7 @@
     // "allowUnusedLabels": true,                        /* Disable error reporting for unused labels. */
     // "allowUnreachableCode": true,                     /* Disable error reporting for unreachable code. */
     /* Completeness */
-    // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
-    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+/* Skip type checking all .d.ts files. */
   },
   "include": [
     "src",
