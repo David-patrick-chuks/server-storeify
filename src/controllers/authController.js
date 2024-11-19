@@ -49,11 +49,10 @@ export const login = async (req, res) => {
     // Check if user has a Google ID
     if (user.googleId && user.googleTokens) {
       const jwtToken = createJWT(user.googleId, user.googleTokens);
-      res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      // Send the token directly to the client as a JSON response
+      res.status(200).json({
+        success: true,
+        jwtToken: jwtToken,
       });
 
       logger.info("User logged in successfully with Google ID");
@@ -84,6 +83,7 @@ export const login = async (req, res) => {
 export const oauth2Callback = async (req, res) => {
   const { code, error, error_description } = req.query;
 
+  // Handle OAuth2 error
   if (error) {
     logger.error(`OAuth2 error: ${error} - ${error_description}`);
     res.redirect(
@@ -92,6 +92,7 @@ export const oauth2Callback = async (req, res) => {
     return;
   }
 
+  // Ensure the authorization code is provided
   if (!code) {
     res.status(400).send("No authorization code provided");
     return;
@@ -104,6 +105,8 @@ export const oauth2Callback = async (req, res) => {
     logger.debug(tokens);
     logger.info(tokens.access_token);
     logger.debug(tokens.access_token);
+
+    // Check if access token is available
     if (!tokens || !tokens.access_token) {
       logger.error("Access token not found");
       res.status(400).send("Failed to retrieve access token");
@@ -122,20 +125,25 @@ export const oauth2Callback = async (req, res) => {
       }
     }
 
+    // Ensure the profile email is available
     if (!profile || !profile.email) {
       logger.error("Email not found in Google profile");
       res.status(400).send("Failed to retrieve email from Google profile");
       return;
     }
 
+    // Store tokens for future use
     await storeTokens(profile, tokens);
 
+    // Create JWT token
     const jwtToken = createJWT(profile.id, tokens.access_token);
     if (!jwtToken) {
       logger.error("Failed to create JWT token");
       res.status(500).send("Failed to create JWT token");
       return;
     }
+
+    // Set the JWT token in a cookie
     res.cookie("jwt", jwtToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -143,10 +151,17 @@ export const oauth2Callback = async (req, res) => {
       maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
     });
 
-  
+    // Send the JWT token in the response body as well
+    res.status(200).json({
+      success: true,
+      message: "Authentication successful",
+      jwtToken: jwtToken
+    });
+
     logger.info("Authentication successful, redirecting to profile");
     res.redirect(`${process.env.CLIENT_BASE_URL}/dashboard`);
   } catch (err) {
+    // Log and handle errors
     if (err instanceof Error) {
       logger.error(
         `Error during Google OAuth2 callback: ${err.message}`,
@@ -158,6 +173,7 @@ export const oauth2Callback = async (req, res) => {
     res.status(500).send("Failed to authenticate");
   }
 };
+
 
 // Redirect to Google OAuth2 for login
 export const redirectToGoogleLogin = async (req, res) => {
