@@ -29,9 +29,6 @@ export const isAuthorized = async (req, res, next) => {
   }
 };
 
-// Middleware to authenticate JWT
-// Middleware to authenticate JWT
-import jwt from 'jsonwebtoken';
 
 // Middleware to authenticate JWT
 export const authenticateJWT = (req, res, next) => {
