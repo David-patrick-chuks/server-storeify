@@ -50,6 +50,14 @@ export const login = async (req, res) => {
     if (user.googleId && user.googleTokens) {
       const jwtToken = createJWT(user.googleId, user.googleTokens);
       // Send the token directly to the client as a JSON response
+
+      // Set the JWT token as a cookie with a maxAge of 2 minutes
+      res.cookie("jwt", jwtToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Secure cookies in production
+        sameSite: "strict", // Strict SameSite policy for cookies
+        maxAge: 2 * 60 * 1000, // 2 minutes for the cookie's expiration
+      });
       res.status(200).json({
         success: true,
         jwtToken: jwtToken,
@@ -148,14 +156,15 @@ export const oauth2Callback = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      // maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      maxAge: 2 * 60 * 1000,
     });
 
     // Send the JWT token in the response body as well
     res.status(200).json({
       success: true,
       message: "Authentication successful",
-      jwtToken: jwtToken
+      jwtToken: jwtToken,
     });
 
     logger.info("Authentication successful, redirecting to profile");
@@ -173,7 +182,6 @@ export const oauth2Callback = async (req, res) => {
     res.status(500).send("Failed to authenticate");
   }
 };
-
 
 // Redirect to Google OAuth2 for login
 export const redirectToGoogleLogin = async (req, res) => {

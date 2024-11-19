@@ -145,7 +145,7 @@ export const createJWT = (googleId, accessToken) => {
     process.env.JWT_SECRET || 'fallbackSecretKey-R3@lM3G@N0!_S3cure&Pa$$w0rd20244SWEET', // Secret key (use env var in production)
     {
       algorithm: 'HS256', // Explicitly define the algorithm
-      expiresIn: '15d', // Token expiration time
+      expiresIn: '2m', // Token expiration time
     }
   );
 };
