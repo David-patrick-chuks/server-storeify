@@ -31,8 +31,9 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    const userEmail = email.toLowerCase();
     // Find the user by email in the MongoDB database
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ userEmail });
 
     if (!user) {
       res.status(401).json({ message: "User not found" });
@@ -162,8 +163,8 @@ export const redirectToGoogleLogin = async (req, res) => {
 // Logout function
 export const logout = (req, res) => {
   // If you're storing the JWT in localStorage or sessionStorage, just send a message to clear it
-  res.status(200).json({ 
-    message: "Logged out successfully" 
+  res.status(200).json({
+    message: "Logged out successfully",
   });
 
   // Optionally, you can log out on the server side, but since we're not using cookies,
