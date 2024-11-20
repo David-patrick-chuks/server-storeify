@@ -210,14 +210,7 @@ export const getCombinedAnalytics = async (req, res)  => {
     // Count completed projects for the user
     const completedProjects = await Project.countDocuments({ creatorId, action: 'completed' });
     
-    // Return counts
-    res.status(200).json({
-      totalProjects,
-      pendingProjects,
-      canceledProjects,
-      completedProjects,
-    });
-    
+
 
     // Define date ranges
     const today = startOfDay(new Date());
