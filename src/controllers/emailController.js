@@ -309,6 +309,10 @@ export const sendBulkEmailController = async (req, res) => {
     });
 
     const emailBodyHtml = await AiTextToHtmlFormater(messageBody);
+    if (!emailBodyHtml) {
+      emailBodyHtml = messageBody;
+    }
+
     const { emailAddress } = profile.data;
 
     if (!recipients || recipients.length === 0) {
