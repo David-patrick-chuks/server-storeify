@@ -1,7 +1,7 @@
 
 import Joi from 'joi';
 import Project  from '../models/Projects.js';
-
+import {Types } from 'mongoose'
 import { google } from 'googleapis';
 import { checkAndRefreshAccessToken } from '../services/googleOAuth.js';
 import { startOfDay, subDays, subMonths } from 'date-fns';
@@ -105,6 +105,7 @@ export const getProjectById = async (req, res)  => {
 
 // Update a project by ID
 export const updateProject = async (req, res)  => {
+  
   try {
     const { id } = req.params;
     if (!Types.ObjectId.isValid(id)) {

@@ -106,13 +106,13 @@ export const emailContent = async (req, res)  => {
             return
         } else {
             logger.error('Failed to generate content from Gemini AI.');
-            res.status(500).json({ success: false, message: 'Failed to generate content.' })
+            res.status(500).json({ success: false, message: 'Failed to generate content.', result })
             return
         }
     } catch (error) {
         // Handling unexpected errors and logging them
         logger.error('Error generating email content:', error);
-        res.status(500).json({ success: false, message: 'An unexpected error occurred.' })
+        res.status(500).json({ success: false, message: 'An unexpected error occurred.', error })
         return
     }
 };
