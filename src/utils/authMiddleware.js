@@ -55,7 +55,7 @@ export const isAuthorized = async (req, res, next) => {
     }
 
     // Check if the user email matches the allowed email (e.g., Chutek@gmail.com)
-    if (user.email !== "majidadams200@gmail.com") {
+    if (user.email !== "contact@storeify.co") {
       return res
         .status(403)
         .json({ message: "Access denied. Unauthorized email." });

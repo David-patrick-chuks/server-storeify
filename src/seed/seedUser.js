@@ -12,7 +12,7 @@ dotenv.config(); // Make sure to load environment variables
 
 // Seed user function
 const seedUser = async () => {
-  const existingUser = await User.findOne({ email: 'majidadams200@gmail.com' });
+  const existingUser = await User.findOne({ email: 'contact@storeify.co' });
   if (existingUser) {
     logger.error('User already exists');
     return;
@@ -23,7 +23,7 @@ const seedUser = async () => {
   
   const newUser = new User({
     // username: '',
-    email: 'majidadams200@gmail.com',
+    email: 'contact@storeify.co',
     password: hashedPassword,
   });
   
@@ -52,7 +52,7 @@ function getGravatarUrl(email , size = 80) {
 }
  
 // Example usage
-const email = 'majidadams200@gmail.com';
+const email = 'contact@storeify.co';
 const size = 200; // Optional size parameter
 const gravatarUrl = getGravatarUrl(email, size);
  
