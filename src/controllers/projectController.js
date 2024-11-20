@@ -196,12 +196,28 @@ export const deleteAllProjects = async (_req, res)  => {
 // Combined Analytics Controller
 export const getCombinedAnalytics = async (req, res)  => {
   try {
-    // Project Analytics
-    const totalProjects = await Project.countDocuments();
-    const pendingProjects = await Project.countDocuments({ action: 'pending' });
-    const canceledProjects = await Project.countDocuments({ action: 'canceled' });
-    const completedProjects = await Project.countDocuments({ action: 'completed' });
+    const creatorId = req.userId; // Assuming 'creatorId' is attached to the request when authenticating
 
+    // Count total projects for the user
+    const totalProjects = await Project.countDocuments({ creatorId });
+    
+    // Count pending projects for the user
+    const pendingProjects = await Project.countDocuments({ creatorId, action: 'pending' });
+    
+    // Count canceled projects for the user
+    const canceledProjects = await Project.countDocuments({ creatorId, action: 'canceled' });
+    
+    // Count completed projects for the user
+    const completedProjects = await Project.countDocuments({ creatorId, action: 'completed' });
+    
+    // Return counts
+    res.status(200).json({
+      totalProjects,
+      pendingProjects,
+      canceledProjects,
+      completedProjects,
+    });
+    
 
     // Define date ranges
     const today = startOfDay(new Date());
@@ -212,21 +228,25 @@ export const getCombinedAnalytics = async (req, res)  => {
 
     // Completed projects by range
     const completedLast7Days = await Project.countDocuments({
+      creatorId,
       action: 'completed',
       date: { $gte: last7Days },
     });
 
     const completedLastMonth = await Project.countDocuments({
+      creatorId,
       action: 'completed',
       date: { $gte: lastMonth },
     });
 
     const completedLast6Months = await Project.countDocuments({
+      creatorId,
       action: 'completed',
       date: { $gte: last6Months },
     });
 
     const completedLast12Months = await Project.countDocuments({
+      creatorId,
       action: 'completed',
       date: { $gte: last12Months },
     });
