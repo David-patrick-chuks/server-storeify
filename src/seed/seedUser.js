@@ -39,6 +39,7 @@ const runSeeder = async () => {
 };
 
 runSeeder();
+// runSeeder();
 
 
 // 1557:gk-EWp2gtvvD-m-F3YehQ-P5ctOKlwVDyPq-Jn_5JDvG3g-RzwQasviXYagaJp7X
