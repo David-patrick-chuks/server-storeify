@@ -18,7 +18,7 @@ import projectRoutes from "./routes/projectRoutes.js";
 import { healthcareService } from "./services/HealthCheckController.js";
 import { catchAll404Request } from "./utils/catchAll404Request.js";
 import { globalError } from "./utils/globalErrorHandler.js";
-import "./cron/cronJobs.js";
+// import "./cron/cronJobs.js";
 
 dotenv.config();
 
