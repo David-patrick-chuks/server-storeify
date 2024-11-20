@@ -100,7 +100,7 @@ export const getEmailsWithPagination = async (req, res) => {
     }
 
     const limit = parseInt(req.query.limit, 10) || 10;
-    const nextPageToken = req.query.nextPageToken | undefined;
+    const nextPageToken = req.query.nextPageToken || undefined;
 
     const oauth2Client = new google.auth.OAuth2();
     oauth2Client.setCredentials({ access_token: accessToken });
@@ -118,22 +118,21 @@ export const getEmailsWithPagination = async (req, res) => {
     const response = await gmail.users.messages.list({
       userId: "me",
       maxResults: limit,
-      pageToken: nextPageToken ? nextPageToken : undefined,
+      pageToken: nextPageToken,
     });
 
     const messages = response.data.messages || [];
     let nextPageTokenFromList = response.data.nextPageToken || null;
 
-    // Log tokens for debugging
     console.log("Received nextPageToken from request:", nextPageToken);
     console.log(
       "New nextPageToken from Gmail response:",
       nextPageTokenFromList
     );
 
-    // Check if `nextPageToken` from request matches the one from Gmail response
-    if (nextPageToken && nextPageToken === nextPageTokenFromList) {
-      nextPageTokenFromList = null; // End of pages
+    // If no nextPageToken from Gmail, it means there's no more pages
+    if (!nextPageTokenFromList) {
+      nextPageTokenFromList = null;
     }
 
     // Fetch detailed email information
@@ -198,6 +197,7 @@ export const getEmailsWithPagination = async (req, res) => {
     const emailDetails = (await Promise.all(emailDetailsPromises)).filter(
       (email) => email !== null
     );
+
     // Send response with pagination
     res.status(200).json({
       emailAddress,
@@ -220,6 +220,7 @@ export const getEmailsWithPagination = async (req, res) => {
     });
   }
 };
+
 
 export const getEmailsTotal = async (req, res) => {
   try {
