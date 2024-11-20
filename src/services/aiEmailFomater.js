@@ -74,6 +74,7 @@ export const AiTextToHtmlFormater = async (prompt )  => {
 
         const model = googleAI.getGenerativeModel({
             model: 'gemini-1.0-pro-latest',
+            
             systemInstruction,
             safetySettings,
             generationConfig,
