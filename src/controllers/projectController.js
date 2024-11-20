@@ -32,13 +32,17 @@ const updateProjectSchema = Joi.object({
   action: Joi.string().valid('pending', 'canceled', 'completed').optional(),
 });
 
+const formatValidationErrors = (details) => {
+  // Return only the message from each validation error
+  return details.map(detail => detail.message);
+};
 // Create a new project
 export const createProject = async (req, res)  => {
   try {
     // Validate request body
     const { error, value } = projectSchema.validate(req.body);
     if (error) {
-      res.status(400).json({ message: 'Validation error', error: error.details });
+      res.status(400).json({ message: 'Validation error', error: formatValidationErrors(error.details) });
       return;
     }
 
@@ -116,7 +120,7 @@ export const updateProject = async (req, res)  => {
     // Validate request body for updates
     const { error, value } = updateProjectSchema.validate(req.body);
     if (error) {
-      res.status(400).json({ message: 'Validation error', error: error.details });
+      res.status(400).json({ message: 'Validation error', error: formatValidationErrors(error.details) });
       return;
     }
 
