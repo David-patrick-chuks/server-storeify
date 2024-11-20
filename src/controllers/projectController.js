@@ -40,18 +40,18 @@ const formatValidationErrors = (details) => {
 export const createProject = async (req, res)  => {
   try {
     // Validate request body
-    const { error, value } = projectSchema.validate(req.body);
-    if (error) {
-      res.status(400).json({ message: 'Validation error', error: formatValidationErrors(error.details) });
-      return;
-    }
+    // const { error, value } = projectSchema.validate(req.body);
+    // if (error) {
+    //   res.status(400).json({ message: 'Validation error', error: formatValidationErrors(error.details) });
+    //   return;
+    // }
 
     // Get creatorId from the authenticated user (assumed to be set in middleware)
     const creatorId = req.userId;
 
     // Add creatorId to the project data
     const projectData = {
-      ...value,
+      ...req.body, // Use req.body directly without validation
       creatorId, // Include creatorId
     };
 
@@ -116,19 +116,11 @@ export const getProjectById = async (req, res)  => {
 };
 
 // Update a project by ID
-export const updateProject = async (req, res)  => {
-  
+export const updateProject = async (req, res) => {
   try {
     const { id } = req.params;
     if (!Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: 'Invalid project ID' });
-      return;
-    }
-
-    // Validate request body for updates
-    const { error, value } = updateProjectSchema.validate(req.body);
-    if (error) {
-      res.status(400).json({ message: 'Validation error', error: formatValidationErrors(error.details) });
       return;
     }
 
@@ -139,12 +131,12 @@ export const updateProject = async (req, res)  => {
       return;
     }
 
-    // Check if the client's email is being updated
-    const newEmail = value.clientEmail || existingProject.clientEmail;
-    
+    // Use req.body directly for updates
+    const newEmail = req.body.clientEmail || existingProject.clientEmail;
+
     // Update the project with the new data
-    const updatedProject = await Project.findByIdAndUpdate(id, value, { new: true });
-    
+    const updatedProject = await Project.findByIdAndUpdate(id, req.body, { new: true });
+
     if (!updatedProject) {
       res.status(404).json({ message: 'Project not found' });
       return;
@@ -166,6 +158,7 @@ export const updateProject = async (req, res)  => {
     res.status(500).json({ message: 'Error updating project', error });
   }
 };
+
 
 // Delete a single project by ID
 export const deleteProject = async (req, res)  => {
